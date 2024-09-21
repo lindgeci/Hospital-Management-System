@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 18, 2024 at 02:58 PM
+-- Generation Time: Sep 21, 2024 at 08:41 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -51,15 +51,6 @@ CREATE TABLE `bill` (
   `Patient_ID` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
---
--- Dumping data for table `bill`
---
-
-INSERT INTO `bill` (`Bill_ID`, `Date_Issued`, `Description`, `Amount`, `Payment_Status`, `Patient_ID`) VALUES
-(1, '2024-06-24', 'Pagesa pas kontrolles', 250.00, 'Paid', 1),
-(2, '2024-06-26', 'Pagesa pas qendrimit 4 ditor', 620.00, 'Pending', 2),
-(4, '2024-08-15', 'Per droge', 50.00, 'Pending', 8);
-
 -- --------------------------------------------------------
 
 --
@@ -78,7 +69,6 @@ CREATE TABLE `department` (
 --
 
 INSERT INTO `department` (`Dept_ID`, `Dept_head`, `Dept_name`, `Emp_Count`) VALUES
-(1, 'Ilir Zeqiri', 'Kardiologjia', 10),
 (2, 'Besnik Rama', 'Pediatri', 14),
 (3, 'Anila Shehu', 'Radiologji', 8),
 (4, 'Valbona Dervishi', 'Neorologji', 6),
@@ -102,7 +92,7 @@ CREATE TABLE `doctor` (
 --
 
 INSERT INTO `doctor` (`Doctor_ID`, `Qualifications`, `Emp_ID`, `Specialization`) VALUES
-(26, 'Profesionist', 52, 'Bokser');
+(35, 'uuuuuuuuuuuuuuuuuu', 60, 'mamacita');
 
 -- --------------------------------------------------------
 
@@ -123,9 +113,8 @@ CREATE TABLE `emergency_contact` (
 --
 
 INSERT INTO `emergency_contact` (`Contact_ID`, `Contact_Name`, `Phone`, `Relation`, `Patient_ID`) VALUES
-(1, 'Anida', '044111222', 'Mother', 1),
-(2, 'Avni', '044121987', 'Friend', 2),
-(5, 'Lind', '049444444', 'Father', 8);
+(12, 'lind1', '323232388', 'Father', 10),
+(13, 'test', '212121212', 'Father', 10);
 
 -- --------------------------------------------------------
 
@@ -139,22 +128,16 @@ CREATE TABLE `insurance` (
   `Ins_Code` varchar(10) NOT NULL,
   `End_Date` date NOT NULL,
   `Provider` varchar(100) NOT NULL,
-  `Plan` varchar(100) NOT NULL,
-  `Co_Pay` varchar(100) NOT NULL,
-  `Coverage` varchar(100) NOT NULL,
-  `Maternity` varchar(100) NOT NULL,
-  `Dental` varchar(100) NOT NULL,
-  `Optical` varchar(100) NOT NULL
+  `Dental` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `insurance`
 --
 
-INSERT INTO `insurance` (`Policy_Number`, `Patient_ID`, `Ins_Code`, `End_Date`, `Provider`, `Plan`, `Co_Pay`, `Coverage`, `Maternity`, `Dental`, `Optical`) VALUES
-(1, 1, '111222333', '2025-09-16', 'Yes', 'Yes', 'Yes', '100%', 'Yes', 'Yes', 'Yes'),
-(2, 3, '222113333', '2026-05-13', 'Yes', 'Yes', 'Yes', '75%', 'Yes', 'Yes', 'Yes'),
-(3, 4, '999885664', '2024-10-10', 'Yes', 'Yes', 'Yes', '50%', 'Yes', 'Yes', 'Yes');
+INSERT INTO `insurance` (`Policy_Number`, `Patient_ID`, `Ins_Code`, `End_Date`, `Provider`, `Dental`) VALUES
+(67, 10, '1234568', '2024-09-22', 'Yes', 'Yes'),
+(68, 12, '1234569', '2024-09-22', 'Yes', 'Yes');
 
 -- --------------------------------------------------------
 
@@ -168,15 +151,6 @@ CREATE TABLE `medical_history` (
   `Allergies` varchar(255) DEFAULT NULL,
   `Pre_Conditions` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `medical_history`
---
-
-INSERT INTO `medical_history` (`Record_ID`, `Patient_ID`, `Allergies`, `Pre_Conditions`) VALUES
-(1, 1, 'Nuk ka', 'Dhimje koke'),
-(2, 2, 'Gjalp kikirikut', 'Dhimbje barku'),
-(4, 8, 'Kurgjo', ' Dhimbje barku');
 
 -- --------------------------------------------------------
 
@@ -196,20 +170,14 @@ CREATE TABLE `medicine` (
 --
 
 INSERT INTO `medicine` (`Medicine_ID`, `M_name`, `M_Quantity`, `M_Cost`) VALUES
-(1, 'Amoxicillin', 54, 3.50),
-(3, 'Ibuprofen', 27, 2.80),
-(4, 'Metformin ', 19, 8.70),
-(5, 'Aspirin ', 67, 3.80),
-(6, 'Omeprazole', 10, 5.30),
-(7, 'Atorvastatin', 3, 10.60),
-(8, 'Losartan', 32, 6.40),
-(9, 'Levothyroxine', 21, 8.20),
-(10, 'Amlodipine ', 14, 5.10),
-(11, 'Clopidogrel', 21, 5.70),
-(12, 'Cetirizine', 9, 7.50),
-(13, 'Prednisone', 20, 3.50),
-(14, 'Furosemide', 32, 7.60),
-(15, 'Metoprolol', 21, 6.30);
+(24, 'Simvastatin', 3, 27.00),
+(25, 'Sertraline', 3, 33.00),
+(26, 'Omeprazole', 2, 24.00),
+(27, 'Amoxicillin', 9, 70.00),
+(28, 'Aspirin', 8, 40.00),
+(29, 'Metformin', 10, 80.00),
+(30, 'Levothyroxine', 6, 90.00),
+(31, 'Lisinopril', 10, 60.00);
 
 -- --------------------------------------------------------
 
@@ -234,11 +202,8 @@ CREATE TABLE `patient` (
 --
 
 INSERT INTO `patient` (`Patient_ID`, `Personal_Number`, `Patient_Fname`, `Patient_Lname`, `Birth_Date`, `Gender`, `Blood_type`, `Email`, `Phone`) VALUES
-(1, 1234567890, 'Arben', 'Gashi', '1996-05-08', 'Male', 'AB+', 'arben@gmail.com', '044111222'),
-(2, 987654321, 'Melisa', 'Kuqi', '2002-08-07', 'Female', 'B-', 'Melisa@gmail.com', '049111222'),
-(3, 1122334455, 'Aferdita', 'Ferizi', '2007-12-12', 'Female', 'A-', 'Aferdita@gmail.com', '043222333'),
-(4, 1112223334, 'Ermal', 'Berisha', '2019-01-08', 'Male', 'A+', 'Ermal@gmail.com', '044212314'),
-(8, 1172711777, 'Pacienti', 'Pacienti', '2016-02-11', 'Male', 'A+', 'pacienti1@gmail.com', '099999999');
+(10, 1212121212, 'Lind', 'GECI', '2024-08-31', 'Male', 'B+', 'lindgeci1@gmail.com', '049438421'),
+(12, 2147483647, 'Lind', 'Geci', '2024-09-22', 'Female', 'B+', 'lindgeci1@gmail.com', '049438422');
 
 -- --------------------------------------------------------
 
@@ -268,6 +233,13 @@ CREATE TABLE `rating` (
   `Date` date NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `rating`
+--
+
+INSERT INTO `rating` (`Rating_ID`, `Emp_ID`, `Rating`, `Comments`, `Date`) VALUES
+(8, 60, 2, 'Mire', '2024-09-21');
+
 -- --------------------------------------------------------
 
 --
@@ -278,7 +250,8 @@ CREATE TABLE `reports` (
   `Report_ID` int(11) NOT NULL,
   `personal_number` int(11) NOT NULL,
   `report` longblob NOT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp()
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `Patient_ID` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 -- --------------------------------------------------------
@@ -316,15 +289,6 @@ CREATE TABLE `room` (
   `Room_cost` decimal(10,2) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dumping data for table `room`
---
-
-INSERT INTO `room` (`Room_ID`, `Room_type`, `Patient_ID`, `Room_cost`) VALUES
-(1, 'Four-bed room ', 1, 50.00),
-(2, 'Two-bed room ', 4, 85.00),
-(3, 'Three-bed room ', 3, 64.00);
-
 -- --------------------------------------------------------
 
 --
@@ -352,7 +316,7 @@ CREATE TABLE `staff` (
 --
 
 INSERT INTO `staff` (`Emp_ID`, `Emp_Fname`, `Emp_Lname`, `Joining_Date`, `Emp_type`, `Email`, `Address`, `Dept_ID`, `SSN`, `DOB`, `Date_Separation`, `Qualifications`, `Specialization`) VALUES
-(52, 'Lind', 'Geci', '2024-08-31', 'Doctor', 'lindgeci@gmail.com', 'Upiana', 4, '222222', '2024-08-30', '2024-10-05', 'Profesionist', 'Bokser');
+(60, 'Lir', 'GECI', '2024-09-13', 'Doctor', 'lindgeci1@gmail.com', 'Dardania', 4, '121220', '2024-09-07', '2024-09-29', 'uuuuuuuuuuuuuuuuuu', 'mamacita');
 
 -- --------------------------------------------------------
 
@@ -498,7 +462,8 @@ ALTER TABLE `rating`
 -- Indexes for table `reports`
 --
 ALTER TABLE `reports`
-  ADD PRIMARY KEY (`Report_ID`);
+  ADD PRIMARY KEY (`Report_ID`),
+  ADD KEY `reports_ibfk_1` (`Patient_ID`);
 
 --
 -- Indexes for table `roles`
@@ -552,7 +517,7 @@ ALTER TABLE `visits`
 -- AUTO_INCREMENT for table `appointment`
 --
 ALTER TABLE `appointment`
-  MODIFY `Appoint_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `Appoint_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `bill`
@@ -564,25 +529,25 @@ ALTER TABLE `bill`
 -- AUTO_INCREMENT for table `department`
 --
 ALTER TABLE `department`
-  MODIFY `Dept_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `Dept_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `doctor`
 --
 ALTER TABLE `doctor`
-  MODIFY `Doctor_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
+  MODIFY `Doctor_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT for table `emergency_contact`
 --
 ALTER TABLE `emergency_contact`
-  MODIFY `Contact_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `Contact_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `insurance`
 --
 ALTER TABLE `insurance`
-  MODIFY `Policy_Number` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `Policy_Number` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=69;
 
 --
 -- AUTO_INCREMENT for table `medical_history`
@@ -594,13 +559,13 @@ ALTER TABLE `medical_history`
 -- AUTO_INCREMENT for table `medicine`
 --
 ALTER TABLE `medicine`
-  MODIFY `Medicine_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `Medicine_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
 
 --
 -- AUTO_INCREMENT for table `patient`
 --
 ALTER TABLE `patient`
-  MODIFY `Patient_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `Patient_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `payroll`
@@ -612,13 +577,13 @@ ALTER TABLE `payroll`
 -- AUTO_INCREMENT for table `rating`
 --
 ALTER TABLE `rating`
-  MODIFY `Rating_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `Rating_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `reports`
 --
 ALTER TABLE `reports`
-  MODIFY `Report_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `Report_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -636,7 +601,7 @@ ALTER TABLE `room`
 -- AUTO_INCREMENT for table `staff`
 --
 ALTER TABLE `staff`
-  MODIFY `Emp_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `Emp_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=63;
 
 --
 -- AUTO_INCREMENT for table `userrole`
@@ -654,7 +619,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `visits`
 --
 ALTER TABLE `visits`
-  MODIFY `Visit_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `Visit_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- Constraints for dumped tables
@@ -711,10 +676,22 @@ ALTER TABLE `rating`
   ADD CONSTRAINT `rating_ibfk_2` FOREIGN KEY (`Emp_ID`) REFERENCES `staff` (`Emp_ID`) ON DELETE CASCADE;
 
 --
+-- Constraints for table `reports`
+--
+ALTER TABLE `reports`
+  ADD CONSTRAINT `reports_ibfk_1` FOREIGN KEY (`Patient_ID`) REFERENCES `patient` (`Patient_ID`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Constraints for table `room`
 --
 ALTER TABLE `room`
   ADD CONSTRAINT `room_ibfk_1` FOREIGN KEY (`Patient_ID`) REFERENCES `patient` (`Patient_ID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `staff`
+--
+ALTER TABLE `staff`
+  ADD CONSTRAINT `staff_ibfk_1` FOREIGN KEY (`Dept_ID`) REFERENCES `department` (`Dept_ID`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `userrole`

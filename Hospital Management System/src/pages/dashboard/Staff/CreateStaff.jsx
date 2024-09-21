@@ -120,9 +120,15 @@ function CreateStaff({ onClose }) {
             return;
         }
 
-        const existingStaff = staff.find(staff => staff.SSN === SSN);
-        if (existingStaff) {
-            showAlert('Staff member with the same SSN already exists.');
+        // const existingStaff = staff.find(staff => staff.SSN === SSN);
+        // if (existingStaff) {
+        //     showAlert('Staff member with the same SSN already exists.');
+        //     return;
+        // }
+
+        const existingStaff1 = staff.find(staff => staff.Email === Email);
+        if (existingStaff1) {
+            showAlert('Staff member with the same Email already exists.');
             return;
         }
 

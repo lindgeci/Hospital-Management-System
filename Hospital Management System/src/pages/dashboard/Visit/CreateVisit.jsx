@@ -167,17 +167,20 @@ function CreateVisit({ onClose }) {
                     value={formData.diagnosis}
                     onChange={handleChange}
                 />
-                <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Therapy"
-                    variant="outlined"
-                    id="therapy"
-                    name="therapy"
-                    placeholder="Enter Therapy"
-                    value={formData.therapy}
-                    onChange={handleChange}
-                />
+<FormControl fullWidth margin="normal" variant="outlined">
+    <InputLabel id="therapy-label">Therapy</InputLabel>
+    <Select
+        labelId="therapy-label"
+        id="therapy"
+        name="therapy"
+        value={formData.therapy}
+        onChange={handleChange}
+        label="Therapy"
+    >
+        <MenuItem value="Yes">Yes</MenuItem>
+        <MenuItem value="No">No</MenuItem>
+    </Select>
+</FormControl>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>
                     <Button variant="outlined" onClick={onClose}>Cancel</Button>

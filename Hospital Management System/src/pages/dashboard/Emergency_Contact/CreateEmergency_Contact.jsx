@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Modal, Box, TextField, Button, Typography, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
+import { Modal, Box, TextField, FormHelperText, Button, Typography, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
 import ErrorModal from '../../../components/ErrorModal';
 import Cookies from 'js-cookie';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -14,6 +14,7 @@ function CreateEmergencyContact({ onClose }) {
     });
     const [patients, setPatients] = useState([]);
     const [emergencyContacts, setEmergencyContacts] = useState([]);
+    const [patientPhone, setPatientPhone] = useState(''); // New state for the patient's phone
     const [alertMessage, setAlertMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const token = Cookies.get('token'); 
@@ -25,6 +26,7 @@ function CreateEmergencyContact({ onClose }) {
         const patientId = location.state?.patientId;
         if (patientId) {
             setFormData((prevState) => ({ ...prevState, Patient_ID: patientId }));
+            fetchPatientPhone(patientId); // Fetch phone number for the selected patient
         }
     }, [location.state]);
 
@@ -58,12 +60,30 @@ function CreateEmergencyContact({ onClose }) {
         }
     };
 
+    const fetchPatientPhone = async (patientId) => {
+        try {
+            const response = await axios.get(`http://localhost:9004/api/patient/${patientId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            setPatientPhone(response.data.Phone); // Assuming the response contains the Phone field
+        } catch (error) {
+            console.error('Error fetching patient phone:', error);
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevState) => ({
             ...prevState,
             [name]: value,
         }));
+
+        // If the selected patient changes, fetch the new patient's phone
+        if (name === 'Patient_ID') {
+            fetchPatientPhone(value);
+        }
     };
 
     const handleAddEmergencyContact = async () => {
@@ -135,61 +155,77 @@ function CreateEmergencyContact({ onClose }) {
             <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
                 <Typography variant="h6" component="h1" gutterBottom>Add Emergency Contact</Typography>
-                <TextField
-                    fullWidth
-                    label="Contact Name"
-                    variant="outlined"
-                    margin="normal"
-                    name="Contact_Name"
-                    value={formData.Contact_Name}
-                    onChange={handleChange}
-                />
-                <TextField
-                    fullWidth
-                    label="Phone"
-                    variant="outlined"
-                    margin="normal"
-                    name="Phone"
-                    value={formData.Phone}
-                    onChange={handleChange}
-                />
-                <FormControl fullWidth margin="normal">
-                    <InputLabel id="relation-label">Relation</InputLabel>
-                    <Select
-                        labelId="relation-label"
-                        id="Relation"
-                        name="Relation"
-                        value={formData.Relation}
-                        label="Relation"
-                        onChange={handleChange}
-                    >
-                        <MenuItem value=""><em>Select Relation</em></MenuItem>
-                        <MenuItem value="Mother">Mother</MenuItem>
-                        <MenuItem value="Father">Father</MenuItem>
-                        <MenuItem value="Sister">Sister</MenuItem>
-                        <MenuItem value="Brother">Brother</MenuItem>
-                        <MenuItem value="Close family Member">Close Family Member</MenuItem>
-                        <MenuItem value="Friend">Friend</MenuItem>
-                    </Select>
-                </FormControl>
-                <FormControl fullWidth margin="normal">
-                    <InputLabel id="patient-select-label">Patient</InputLabel>
-                    <Select
-                        labelId="patient-select-label"
-                        id="Patient_ID"
-                        name="Patient_ID"
-                        value={formData.Patient_ID}
-                        label="Patient"
-                        onChange={handleChange}
-                    >
-                        <MenuItem value=""><em>Select Patient</em></MenuItem>
-                        {patients.map(patient => (
-                            <MenuItem key={patient.Patient_ID} value={patient.Patient_ID}>
-                                {`${patient.Patient_Fname} ${patient.Patient_Lname}`}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <TextField
+        fullWidth
+        label="Contact Name"
+        variant="outlined"
+        margin="normal"
+        name="Contact_Name"
+        value={formData.Contact_Name}
+        onChange={handleChange}
+        helperText="Enter the name of the emergency contact"
+    />
+    <TextField
+        fullWidth
+        label="Phone"
+        variant="outlined"
+        margin="normal"
+        name="Phone"
+        value={formData.Phone}
+        onChange={handleChange}
+        helperText="Enter the phone number for the emergency contact"
+    />
+    <FormControl fullWidth margin="normal">
+        <InputLabel id="relation-label">Relation</InputLabel>
+        <Select
+            labelId="relation-label"
+            id="Relation"
+            name="Relation"
+            value={formData.Relation}
+            label="Relation"
+            onChange={handleChange}
+        >
+            <MenuItem value=""><em>Select Relation</em></MenuItem>
+            <MenuItem value="Mother">Mother</MenuItem>
+            <MenuItem value="Father">Father</MenuItem>
+            <MenuItem value="Sister">Sister</MenuItem>
+            <MenuItem value="Brother">Brother</MenuItem>
+            <MenuItem value="Close Family Member">Close Family Member</MenuItem>
+            <MenuItem value="Friend">Friend</MenuItem>
+        </Select>
+        <FormHelperText>Select the relationship to the patient</FormHelperText>
+    </FormControl>
+    <FormControl fullWidth margin="normal">
+        <InputLabel id="patient-select-label">Patient</InputLabel>
+        <Select
+            labelId="patient-select-label"
+            id="Patient_ID"
+            name="Patient_ID"
+            value={formData.Patient_ID}
+            label="Patient"
+            onChange={handleChange}
+        >
+            <MenuItem value=""><em>Select Patient</em></MenuItem>
+            {patients.map(patient => (
+                <MenuItem key={patient.Patient_ID} value={patient.Patient_ID}>
+                    {`${patient.Patient_Fname} ${patient.Patient_Lname}`}
+                </MenuItem>
+            ))}
+        </Select>
+        <FormHelperText>Select the patient associated with this emergency contact</FormHelperText>
+    </FormControl>
+    <TextField
+        fullWidth
+        label="Patient Phone"
+        variant="outlined"
+        margin="normal"
+        value={patientPhone}
+        readOnly
+        helperText="This is the phone number of the selected patient"
+    />
+</Box>
+
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>
                     <Button variant="outlined" onClick={onClose}>Cancel</Button>

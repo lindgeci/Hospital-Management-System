@@ -3,7 +3,7 @@ import axios from 'axios';
 import ErrorModal from '../../../components/ErrorModal';
 import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
-import { Box, TextField, Button, Typography, Modal, MenuItem } from '@mui/material';
+import { Box, TextField, Button, Typography, Modal, MenuItem, FormHelperText } from '@mui/material';
 
 function UpdateRating({ id, onClose }) {
     const [formData, setFormData] = useState({
@@ -13,6 +13,7 @@ function UpdateRating({ id, onClose }) {
         Date: new Date().toISOString().slice(0, 10)
     });
     const [originalData, setOriginalData] = useState({});
+    const [staffEmail, setStaffEmail] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const navigate = useNavigate();
@@ -21,7 +22,8 @@ function UpdateRating({ id, onClose }) {
 
     useEffect(() => {
         fetchStaff();
-    }, []);
+        fetchData();
+    }, [id]);
 
     const fetchStaff = async () => {
         try {
@@ -36,30 +38,40 @@ function UpdateRating({ id, onClose }) {
         }
     };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await axios.get(`http://localhost:9004/api/rating/${id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const data = response.data;
-                setOriginalData(data);
-                setFormData({
-                    Emp_ID: data.Emp_ID,
-                    Rating: data.Rating,
-                    Comments: data.Comments,
-                    Date: data.Date
-                });
-            } catch (error) {
-                console.error('Error fetching rating:', error);
-                showAlert('Error fetching rating details.');
-            }
-        };
+    const fetchData = async () => {
+        try {
+            const response = await axios.get(`http://localhost:9004/api/rating/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = response.data;
+            setOriginalData(data);
+            setFormData({
+                Emp_ID: data.Emp_ID,
+                Rating: data.Rating,
+                Comments: data.Comments,
+                Date: data.Date
+            });
+            fetchStaffEmail(data.Emp_ID);
+        } catch (error) {
+            console.error('Error fetching rating:', error);
+            showAlert('Error fetching rating details.');
+        }
+    };
 
-        fetchData();
-    }, [id, token]);
+    const fetchStaffEmail = async (empId) => {
+        try {
+            const response = await axios.get(`http://localhost:9004/api/staff/${empId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            setStaffEmail(response.data.Email);
+        } catch (error) {
+            console.error('Error fetching staff email:', error);
+        }
+    };
 
     const showAlert = (message) => {
         setAlertMessage(message);
@@ -78,11 +90,11 @@ function UpdateRating({ id, onClose }) {
             return;
         }
         if (!formData.Comments.trim()) {
-            showAlert("Comment name cannot be empty.");
+            showAlert("Comment cannot be empty.");
             return;
         }
         if (!formData.Rating || formData.Rating < 1 || formData.Rating > 5) {
-            showAlert("Rating must be within 1-5.");
+            showAlert("Rating must be between 1 and 5.");
             return;
         }
         if (!formData.Emp_ID || formData.Emp_ID < 1) {
@@ -90,25 +102,25 @@ function UpdateRating({ id, onClose }) {
             return;
         }
         if (formData.Comments.length > 30) {
-            showAlert('Limit of characters reached(30)');
+            showAlert('Character limit reached (30).');
             return;
         }
 
         try {
-            const currentDate = new Date().toISOString().slice(0, 10); // Get current date
+            const currentDate = new Date().toISOString().slice(0, 10);
             await axios.put(`http://localhost:9004/api/rating/update/${id}`, {
                 Emp_ID: formData.Emp_ID,
                 Rating: formData.Rating,
                 Comments: formData.Comments,
-                Date: currentDate, // Update to current date
+                Date: currentDate,
             }, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
 
-            navigate('/dashboard/rating'); // Navigate to the medicines dashboard after updating
-            window.location.reload(); // Refresh the page to show the updated data
+            navigate('/dashboard/rating');
+            window.location.reload();
         } catch (error) {
             console.error('Error updating rating:', error);
             showAlert('Error updating rating. Please try again.');
@@ -118,6 +130,10 @@ function UpdateRating({ id, onClose }) {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevState) => ({ ...prevState, [name]: value }));
+
+        if (name === 'Emp_ID') {
+            fetchStaffEmail(value);
+        }
     };
 
     return (
@@ -135,7 +151,6 @@ function UpdateRating({ id, onClose }) {
                     name="Emp_ID"
                     value={formData.Emp_ID}
                     onChange={handleChange}
-                    disabled
                 >
                     <MenuItem value=''>Select</MenuItem>
                     {staff.map((staff) => (
@@ -144,6 +159,19 @@ function UpdateRating({ id, onClose }) {
                         </MenuItem>
                     ))}
                 </TextField>
+                <FormHelperText>Select the employee for whom you are updating the rating.</FormHelperText>
+
+                <TextField
+                    margin="normal"
+                    fullWidth
+                    label="Staff Email"
+                    variant="outlined"
+                    value={staffEmail}
+                    readOnly
+                    helperText="Email of the selected staff member"
+                    disabled
+                />
+                
                 <TextField
                     margin="normal"
                     fullWidth
@@ -156,12 +184,12 @@ function UpdateRating({ id, onClose }) {
                     onChange={handleChange}
                 >
                     <MenuItem value='' disabled>Select Rating</MenuItem>
-                    <MenuItem value='1'>1</MenuItem>
-                    <MenuItem value='2'>2</MenuItem>
-                    <MenuItem value='3'>3</MenuItem>
-                    <MenuItem value='4'>4</MenuItem>
-                    <MenuItem value='5'>5</MenuItem>
+                    {[1, 2, 3, 4, 5].map(rating => (
+                        <MenuItem key={rating} value={rating}>{rating}</MenuItem>
+                    ))}
                 </TextField>
+                <FormHelperText>Select a rating from 1 to 5.</FormHelperText>
+
                 <TextField
                     margin="normal"
                     fullWidth
@@ -172,6 +200,8 @@ function UpdateRating({ id, onClose }) {
                     value={formData.Comments}
                     onChange={handleChange}
                 />
+                <FormHelperText>Enter your comments (max 30 characters).</FormHelperText>
+
                 <TextField
                     margin="normal"
                     fullWidth
@@ -183,6 +213,7 @@ function UpdateRating({ id, onClose }) {
                     onChange={handleChange}
                     disabled
                 />
+                
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleUpdateRating} sx={{ mr: 1 }}>Submit</Button>
                     <Button variant="outlined" onClick={onClose}>Cancel</Button>

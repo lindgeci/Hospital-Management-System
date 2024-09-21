@@ -1,30 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Box, TextField, Button, Typography, Modal, InputAdornment, MenuItem } from '@mui/material';
-import ErrorModal from '../../../components/ErrorModal'; // Assuming this component exists for handling error messages
+import { Box, TextField, Button, Typography, Modal, MenuItem } from '@mui/material';
+import ErrorModal from '../../../components/ErrorModal';
 import Cookies from 'js-cookie';
+
 function UpdateInsurance({ id, onClose }) {
     const [formData, setFormData] = useState({
         Patient_ID: '',
         Ins_Code: '',
         End_Date: '',
         Provider: '',
-        Plan: '',
-        Co_Pay: '',
-        Coverage: '',
-        Maternity: '',
         Dental: '',
-        Optical: '',
     });
     const [alertMessage, setAlertMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [originalData, setOriginalData] = useState({});
     const [patients, setPatients] = useState([]);
+    const [patientPhone, setPatientPhone] = useState(''); // New state for patient's phone number
     const token = Cookies.get('token');
 
     useEffect(() => {
         fetchPatients();
-    }, []);
+        fetchInsuranceData();
+    }, [id]);
 
     const fetchPatients = async () => {
         try {
@@ -39,36 +37,41 @@ function UpdateInsurance({ id, onClose }) {
         }
     };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await axios.get(`http://localhost:9004/api/insurance/${id}`,{
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const data = response.data;
-                setOriginalData(data);
-                setFormData({
-                    Patient_ID: data.Patient_ID,
-                    Ins_Code: data.Ins_Code,
-                    End_Date: data.End_Date,
-                    Provider: data.Provider,
-                    Plan: data.Plan,
-                    Co_Pay: data.Co_Pay,
-                    Coverage: data.Coverage,
-                    Maternity: data.Maternity,
-                    Dental: data.Dental,
-                    Optical: data.Optical,
-                });
-            } catch (error) {
-                console.error('Error fetching insurance:', error);
-                showAlert('Error fetching insurance details.');
-            }
-        };
+    const fetchInsuranceData = async () => {
+        try {
+            const response = await axios.get(`http://localhost:9004/api/insurance/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = response.data;
+            setOriginalData(data);
+            setFormData({
+                Patient_ID: data.Patient_ID,
+                Ins_Code: data.Ins_Code,
+                End_Date: data.End_Date,
+                Provider: data.Provider,
+                Dental: data.Dental,
+            });
+            fetchPatientPhone(data.Patient_ID); // Fetch phone number of the patient
+        } catch (error) {
+            console.error('Error fetching insurance:', error);
+            showAlert('Error fetching insurance details.');
+        }
+    };
 
-        fetchData();
-    }, [id, token]);
+    const fetchPatientPhone = async (patientId) => {
+        try {
+            const response = await axios.get(`http://localhost:9004/api/patient/${patientId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            setPatientPhone(response.data.Phone); // Assuming the response contains a `Phone` field
+        } catch (error) {
+            console.error('Error fetching patient phone:', error);
+        }
+    };
 
     const showAlert = (message) => {
         setAlertMessage(message);
@@ -81,22 +84,27 @@ function UpdateInsurance({ id, onClose }) {
     };
 
     const handleUpdateInsurance = async () => {
-        const numberRegex = /^\d+$/;
-
+        // Validation logic
         if (!formData.Patient_ID || formData.Patient_ID < 1) {
             showAlert("Patient ID must be a positive number.");
             return;
         }
 
         if (!formData.Ins_Code) {
-            showAlert("Insurance Code must be a positive number.");
+            showAlert("Insurance Code is required.");
             return;
         }
 
-        if (formData.Ins_Code.length < 6) {
-            showAlert("Insurance Code must be at least 6 characters.");
+        if (formData.Ins_Code.length !== 7) {
+            showAlert("Ins_Code must be 7 characters long");
             return;
         }
+
+        if (formData.Ins_Code.startsWith('0')) {
+            showAlert("Please remove the leading 0 from the Ins_Code.");
+            return;
+        }
+
         if (!formData.End_Date) {
             showAlert("End Date is required.");
             return;
@@ -107,32 +115,8 @@ function UpdateInsurance({ id, onClose }) {
             return;
         }
 
-        if (!formData.Plan.trim()) {
-            showAlert("Plan cannot be empty.");
-            return;
-        }
-
-        if (!formData.Co_Pay.trim()) {
-            showAlert("Co-Pay cannot be empty.");
-            return;
-        }
-
-        if (!formData.Coverage.trim()) {
-            showAlert("Coverage cannot be empty.");
-            return;
-        }
-        if (!formData.Maternity.trim()) {
-            showAlert("Maternity cannot be empty.");
-            return;
-        }
-
         if (!formData.Dental.trim()) {
             showAlert("Dental cannot be empty.");
-            return;
-        }
-
-        if (!formData.Optical.trim()) {
-            showAlert("Optical cannot be empty.");
             return;
         }
 
@@ -141,12 +125,7 @@ function UpdateInsurance({ id, onClose }) {
             formData.Ins_Code === originalData.Ins_Code &&
             formData.End_Date === originalData.End_Date &&
             formData.Provider === originalData.Provider &&
-            formData.Plan === originalData.Plan &&
-            formData.Co_Pay === originalData.Co_Pay &&
-            formData.Coverage === originalData.Coverage &&
-            formData.Maternity === originalData.Maternity &&
-            formData.Dental === originalData.Dental &&
-            formData.Optical === originalData.Optical
+            formData.Dental === originalData.Dental
         ) {
             showAlert("Data must be changed before updating.");
             return;
@@ -156,7 +135,6 @@ function UpdateInsurance({ id, onClose }) {
             await axios.put(`http://localhost:9004/api/insurance/update/${id}`, formData, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-
             onClose();
             window.location.reload();
         } catch (error) {
@@ -164,6 +142,8 @@ function UpdateInsurance({ id, onClose }) {
             showAlert('Error updating insurance.');
         }
     };
+
+    const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
 
     return (
         <Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
@@ -181,6 +161,7 @@ function UpdateInsurance({ id, onClose }) {
                     value={formData.Patient_ID}
                     onChange={handleChange}
                     disabled
+                    helperText="Select the patient for whom you're updating insurance"
                 >
                     <MenuItem value=''>Select Patient</MenuItem>
                     {patients.map(patient => (
@@ -189,6 +170,15 @@ function UpdateInsurance({ id, onClose }) {
                         </MenuItem>
                     ))}
                 </TextField>
+                <TextField
+                    fullWidth
+                    label="Patient Phone"
+                    variant="outlined"
+                    margin="normal"
+                    value={patientPhone}
+                    readOnly
+                    helperText="This is the phone number of the selected patient"
+                />
                 <TextField
                     margin="normal"
                     fullWidth
@@ -199,6 +189,7 @@ function UpdateInsurance({ id, onClose }) {
                     value={formData.Ins_Code}
                     onChange={handleChange}
                     disabled
+                    helperText="Enter the insurance code associated with the patient"
                 />
                 <TextField
                     margin="normal"
@@ -211,6 +202,8 @@ function UpdateInsurance({ id, onClose }) {
                     value={formData.End_Date}
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
+                    inputProps={{ min: today }} // Prevent past date selection
+                    helperText="Select the insurance end date"
                 />
                 <TextField
                     margin="normal"
@@ -222,68 +215,7 @@ function UpdateInsurance({ id, onClose }) {
                     name="Provider"
                     value={formData.Provider}
                     onChange={handleChange}
-                >
-                    <MenuItem value=''>Select Yes/No</MenuItem>
-                    <MenuItem value='No'>No</MenuItem>
-                    <MenuItem value='Yes'>Yes</MenuItem>
-                </TextField>
-                <TextField
-                    margin="normal"
-                    fullWidth
-                    select
-                    label="Plan"
-                    variant="outlined"
-                    id="Plan"
-                    name="Plan"
-                    value={formData.Plan}
-                    onChange={handleChange}
-                >
-                    <MenuItem value=''>Select Yes/No</MenuItem>
-                    <MenuItem value='No'>No</MenuItem>
-                    <MenuItem value='Yes'>Yes</MenuItem>
-                </TextField>
-                <TextField
-                    margin="normal"
-                    fullWidth
-                    select
-                    label="Co-Pay"
-                    variant="outlined"
-                    id="Co_Pay"
-                    name="Co_Pay"
-                    value={formData.Co_Pay}
-                    onChange={handleChange}
-                >
-                    <MenuItem value=''>Select Yes/No</MenuItem>
-                    <MenuItem value='No'>No</MenuItem>
-                    <MenuItem value='Yes'>Yes</MenuItem>
-                </TextField>
-                <TextField
-                    margin="normal"
-                    fullWidth
-                    select
-                    label="Coverage"
-                    variant="outlined"
-                    id="Coverage"
-                    name="Coverage"
-                    value={formData.Coverage}
-                    onChange={handleChange}
-                >
-                    <MenuItem value=''>Select Coverage</MenuItem>
-                    <MenuItem value='25%'>25%</MenuItem>
-                    <MenuItem value='50%'>50%</MenuItem>
-                    <MenuItem value='75%'>75%</MenuItem>
-                    <MenuItem value='100%'>100%</MenuItem>
-                </TextField>
-                <TextField
-                    margin="normal"
-                    fullWidth
-                    select
-                    label="Maternity"
-                    variant="outlined"
-                    id="Maternity"
-                    name="Maternity"
-                    value={formData.Maternity}
-                    onChange={handleChange}
+                    helperText="Select if a provider is assigned"
                 >
                     <MenuItem value=''>Select Yes/No</MenuItem>
                     <MenuItem value='No'>No</MenuItem>
@@ -299,21 +231,7 @@ function UpdateInsurance({ id, onClose }) {
                     name="Dental"
                     value={formData.Dental}
                     onChange={handleChange}
-                >
-                    <MenuItem value=''>Select Yes/No</MenuItem>
-                    <MenuItem value='No'>No</MenuItem>
-                    <MenuItem value='Yes'>Yes</MenuItem>
-                </TextField>
-                <TextField
-                    margin="normal"
-                    fullWidth
-                    select
-                    label="Optical"
-                    variant="outlined"
-                    id="Optical"
-                    name="Optical"
-                    value={formData.Optical}
-                    onChange={handleChange}
+                    helperText="Select if dental coverage is included"
                 >
                     <MenuItem value=''>Select Yes/No</MenuItem>
                     <MenuItem value='No'>No</MenuItem>

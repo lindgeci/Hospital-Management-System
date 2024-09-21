@@ -26,38 +26,50 @@ const FindSingleInsurance = async (req, res) => {
 
 const AddInsurance = async (req, res) => {
     try {
-        const {Patient_ID, Ins_Code, End_Date, Provider, Plan, Co_Pay, Coverage, Maternity, Dental, Optical} = req.body;
+        const { Patient_ID, Ins_Code, End_Date, Provider, Dental } = req.body;
 
         // Validate input fields
-        if (!Ins_Code || Ins_Code.length < 6) {
-            return res.status(400).json({ error: 'Ins_Code must be at least 6 characters long' });
+        if (!Ins_Code) {
+            return res.status(400).json({ error: 'Ins_Code cannot be empty' });
+        }
+        const insCodeStr = Ins_Code.toString();
+        if (insCodeStr.length !== 7) {
+            return res.status(400).json({ error: 'Ins_Code must be 7 characters long' });
         }
         if (!End_Date) {
             return res.status(400).json({ error: 'End_Date cannot be empty' });
         }
+        if (insCodeStr.startsWith('0')) {
+            return res.status(400).json({ error: 'Please remove the leading 0 from the Ins_Code.' });
+        }
+        if (new Date(End_Date) < new Date(new Date().setHours(0, 0, 0, 0))) {
+            return res.status(400).json({ error: 'End_Date cannot be in the past' });
+        }
         if (!Provider) {
             return res.status(400).json({ error: 'Provider cannot be empty' });
         }
-        // Similarly, add validations for other fields (Plan, Co_Pay, Coverage, Maternity, Dental, Optical)
 
-        // Check if the insurance already exists
-        const existingInsurance = await Insurance.findOne({ where: { Ins_Code } });
-        if (existingInsurance) {
-            return res.status(400).json({ error: 'Insurance with the same code already exists' });
+        // Check if the insurance code is already used by any patient
+        const existingInsuranceWithCode = await Insurance.findOne({ where: { Ins_Code } });
+        if (existingInsuranceWithCode) {
+            return res.status(400).json({ error: 'This insurance code is already in use.' });
         }
 
+        // Check if this patient already has an insurance record
+        const existingInsuranceForPatient = await Insurance.findOne({ where: { Patient_ID } });
+        if (existingInsuranceForPatient) {
+            return res.status(400).json({ error: 'This patient already has an insurance record.' });
+        }
+
+        // Create new insurance record
         const newInsurance = await Insurance.create({
             Patient_ID,
             Ins_Code,
             End_Date,
             Provider,
-            Plan,
-            Co_Pay,
-            Coverage,
-            Maternity,
             Dental,
-            Optical,
         });
+
         res.json({ success: true, message: 'Insurance added successfully', data: newInsurance });
     } catch (error) {
         console.error('Error adding insurance:', error);
@@ -65,29 +77,40 @@ const AddInsurance = async (req, res) => {
     }
 };
 
+
+
 const UpdateInsurance = async (req, res) => {
     try {
-        const { Patient_ID, Ins_Code, End_Date, Provider, Plan, Co_Pay, Coverage, Maternity, Dental, Optical } = req.body;
+        const { Patient_ID, Ins_Code, End_Date, Provider, Dental } = req.body;
 
         // Validation
-        if (!Ins_Code || Ins_Code.length < 6) {
-            return res.status(400).json({ error: 'Ins_Code must be at least 6 characters long' });
+        if (!Ins_Code) {
+            return res.status(400).json({ error: 'Ins_Code cannot be empty' });
+        }
+        const insCodeStr = Ins_Code.toString();
+        if (insCodeStr.length !=7) {
+            return res.status(400).json({ error: 'Ins_Code must be 7 characters long' });
         }
         if (!End_Date) {
             return res.status(400).json({ error: 'End_Date cannot be empty' });
         }
+        if (insCodeStr.startsWith('0')) {
+            return res.status(400).json({ error: 'Please remove the leading 0 from the Ins_Code.' });
+        }
+        if (new Date(End_Date) < new Date(new Date().setHours(0, 0, 0, 0))) {
+            return res.status(400).json({ error: 'End_Date cannot be in the past' });
+        }
         if (!Provider) {
             return res.status(400).json({ error: 'Provider cannot be empty' });
         }
-        // Similarly, add validations for other fields (Plan, Co_Pay, Coverage, Maternity, Dental, Optical)
 
         const updated = await Insurance.update(
-            { Patient_ID, Ins_Code, End_Date, Provider, Plan, Co_Pay, Coverage, Maternity, Dental, Optical },
+            { Patient_ID, Ins_Code, End_Date, Provider, Dental },
             { where: { Policy_Number: req.params.id } }
         );
+
         if (updated[0] === 0) {
-            res.status(404).json({ error: 'Insurance not found or not updated' });
-            return;
+            return res.status(404).json({ error: 'Insurance not found or not updated' });
         }
         res.json({ success: true, message: 'Insurance updated successfully' });
     } catch (error) {
@@ -102,8 +125,7 @@ const DeleteInsurance = async (req, res) => {
             where: { Policy_Number: req.params.id },
         });
         if (deleted === 0) {
-            res.status(404).json({ error: 'Insurance not found' });
-            return;
+            return res.status(404).json({ error: 'Insurance not found' });
         }
         res.json({ success: true, message: 'Insurance deleted successfully' });
     } catch (error) {

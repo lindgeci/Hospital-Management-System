@@ -27,27 +27,7 @@ const Insurance = sequelize.define('Insurance', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  Plan: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  Co_Pay: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  Coverage: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  Maternity: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
   Dental: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  Optical: {
     type: DataTypes.STRING,
     allowNull: false,
   },

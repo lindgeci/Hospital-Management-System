@@ -3,7 +3,6 @@ import axios from 'axios';
 import { Box, TextField, Button, Typography, Modal, MenuItem } from '@mui/material';
 import ErrorModal from '../../../components/ErrorModal';
 import Cookies from 'js-cookie';
-import { useNavigate } from 'react-router-dom';
 
 function UpdateEmergency_Contact({ id, onClose }) {
     const [formData, setFormData] = useState({
@@ -12,16 +11,19 @@ function UpdateEmergency_Contact({ id, onClose }) {
         Relation: '',
         Patient_ID: '',
     });
+    const [patientPhone, setPatientPhone] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [originalData, setOriginalData] = useState({});
     const [patients, setPatients] = useState([]);
     const token = Cookies.get('token');
-    const navigate = useNavigate();
 
     useEffect(() => {
         fetchPatients();
-    }, []);
+        if (id) {
+            fetchData();
+        }
+    }, [id, token]);
 
     const fetchPatients = async () => {
         try {
@@ -33,18 +35,19 @@ function UpdateEmergency_Contact({ id, onClose }) {
             setPatients(response.data);
         } catch (error) {
             console.error('Error fetching patients:', error);
+            showAlert('Error fetching patients.');
         }
     };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await axios.get(`http://localhost:9004/api/emergency_contact/${id}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                const data = response.data;
+    const fetchData = async () => {
+        try {
+            const response = await axios.get(`http://localhost:9004/api/emergency_contact/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = response.data;
+            if (data) {
                 setOriginalData(data);
                 setFormData({
                     Contact_Name: data.Contact_Name,
@@ -52,14 +55,32 @@ function UpdateEmergency_Contact({ id, onClose }) {
                     Relation: data.Relation,
                     Patient_ID: data.Patient_ID,
                 });
-            } catch (error) {
-                console.error('Error fetching emergency contact:', error);
-                showAlert('Error fetching emergency contact details.');
+                fetchPatientPhone(data.Patient_ID);
+            } else {
+                showAlert('No data found for this emergency contact.');
             }
-        };
+        } catch (error) {
+            console.error('Error fetching emergency contact:', error);
+            showAlert('Error fetching emergency contact details.');
+        }
+    };
 
-        fetchData();
-    }, [id, token]);
+    const fetchPatientPhone = async (patientId) => {
+        if (!patientId) return;
+        console.log(`Fetching phone number for patient ID: ${patientId}...`);
+        try {
+            const response = await axios.get(`http://localhost:9004/api/patient/${patientId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            console.log('Patient phone fetched successfully:', response.data.Phone);
+            setPatientPhone(response.data.Phone);
+        } catch (error) {
+            console.error('Error fetching patient phone:', error);
+            showAlert('Error fetching patient phone.');
+        }
+    };
 
     const showAlert = (message) => {
         setAlertMessage(message);
@@ -69,26 +90,25 @@ function UpdateEmergency_Contact({ id, onClose }) {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevState) => ({ ...prevState, [name]: value }));
+
+        if (name === 'Patient_ID') {
+            fetchPatientPhone(value);
+        }
     };
 
     const handleUpdateContact = async () => {
-        const phoneRegex = /^(?:\+\d{1,2}\s?)?(?:\d{3})(?:\d{6})$/;
-
         if (!formData.Contact_Name.trim()) {
             showAlert("Name cannot be empty.");
             return;
         }
-
-        if (!formData.Phone.trim() || !formData.Phone.match(phoneRegex) || formData.Phone.length !== 9) {
+        if (!formData.Phone.trim() || formData.Phone.length !== 9) {
             showAlert("Phone should be 9 characters long!");
             return;
         }
-
         if (!formData.Relation.trim()) {
             showAlert("Relation cannot be empty.");
             return;
         }
-
         if (!formData.Patient_ID || formData.Patient_ID < 1) {
             showAlert("Invalid Patient ID.");
             return;
@@ -108,8 +128,7 @@ function UpdateEmergency_Contact({ id, onClose }) {
             await axios.put(`http://localhost:9004/api/emergency_contact/update/${id}`, formData, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-
-            navigate('/dashboard/emergency_contact');
+            onClose();
             window.location.reload();
         } catch (error) {
             console.error('Error updating emergency contact:', error);
@@ -131,16 +150,17 @@ function UpdateEmergency_Contact({ id, onClose }) {
                     name="Contact_Name"
                     value={formData.Contact_Name}
                     onChange={handleChange}
+                    helperText="Enter the name of the emergency contact"
                 />
                 <TextField
-                    margin="normal"
                     fullWidth
                     label="Phone"
                     variant="outlined"
-                    id="Phone"
+                    margin="normal"
                     name="Phone"
                     value={formData.Phone}
                     onChange={handleChange}
+                    helperText="Enter the phone number for the emergency contact"
                     disabled
                 />
                 <TextField
@@ -153,13 +173,14 @@ function UpdateEmergency_Contact({ id, onClose }) {
                     name="Relation"
                     value={formData.Relation}
                     onChange={handleChange}
+                    helperText="Select the relationship to the patient"
                 >
                     <MenuItem value=''>Select Relation</MenuItem>
                     <MenuItem value='Mother'>Mother</MenuItem>
                     <MenuItem value='Father'>Father</MenuItem>
                     <MenuItem value='Sister'>Sister</MenuItem>
                     <MenuItem value='Brother'>Brother</MenuItem>
-                    <MenuItem value='Close family Member'>Close Family Member</MenuItem>
+                    <MenuItem value='Close Family Member'>Close Family Member</MenuItem>
                     <MenuItem value='Friend'>Friend</MenuItem>
                 </TextField>
                 <TextField
@@ -172,7 +193,7 @@ function UpdateEmergency_Contact({ id, onClose }) {
                     name="Patient_ID"
                     value={formData.Patient_ID}
                     onChange={handleChange}
-                    disabled
+                    helperText="Select the patient associated with this emergency contact"
                 >
                     <MenuItem value=''>Select Patient</MenuItem>
                     {patients.map(patient => (
@@ -181,6 +202,17 @@ function UpdateEmergency_Contact({ id, onClose }) {
                         </MenuItem>
                     ))}
                 </TextField>
+                <TextField
+                    margin="normal"
+                    fullWidth
+                    label="Patient Phone"
+                    variant="outlined"
+                    id="Phone"
+                    name="Phone"
+                    value={patientPhone}
+                    helperText="This is the phone number of the associated patient"
+                    disabled
+                />
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleUpdateContact} sx={{ mr: 1 }}>Submit</Button>
                     <Button variant="outlined" onClick={onClose}>Cancel</Button>

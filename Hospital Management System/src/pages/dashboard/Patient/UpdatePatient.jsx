@@ -165,6 +165,7 @@ function UpdatePatient({ id, onClose }) {
                     variant="outlined"
                     id="Personal_Number"
                     name="Personal_Number"
+                    type="number"
                     placeholder="Enter Personal Number"
                     value={formData.Personal_Number}
                     onChange={handleChange}

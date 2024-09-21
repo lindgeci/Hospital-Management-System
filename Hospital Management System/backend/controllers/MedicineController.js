@@ -80,7 +80,7 @@ const UpdateMedicine = async (req, res) => {
             return res.status(400).json({ error: 'Medicine quantity must be at least 1' });
         }
 
-        if (parseFloat(M_Cost) < 1 || isNaN(parseFloat(M_Cost))) {
+        if (parseFloat(M_Cost) < 1) {
             return res.status(400).json({ error: 'Medicine cost must be at least 1' });
         }
 

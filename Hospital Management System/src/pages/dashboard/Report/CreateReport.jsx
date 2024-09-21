@@ -215,58 +215,61 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
 
   const createPdfAndSaveToDb = async () => {
     if (
-      !formData.personalNumber ||
-      !formData.patientName ||
-      !formData.age ||
-      !formData.patientGender ||
-      !formData.bloodType ||
-      !formData.diagnosis ||
-      !formData.doctorName ||
-      !formData.email ||
-      !formData.phone
+        !formData.personalNumber ||
+        !formData.patientName ||
+        !formData.age ||
+        !formData.patientGender ||
+        !formData.bloodType ||
+        !formData.diagnosis ||
+        !formData.doctorName ||
+        !formData.email ||
+        !formData.phone
     ) {
-      setModalMessage('Please fill in all fields before saving report.');
-      setShowModal(true);
-      return;
+        setModalMessage('Please fill in all fields before saving report.');
+        setShowModal(true);
+        return;
     }
     try {
-      const pdfResponse = await axios.post(
-        'http://localhost:9004/api/report/create-pdf',
-        {
-          ...formData
-        },
-        {
-          responseType: 'blob',
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+        const pdfResponse = await axios.post(
+            'http://localhost:9004/api/report/create-pdf',
+            {
+                ...formData
+            },
+            {
+                responseType: 'blob',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
+        const formDataWithPdf = new FormData();
+        formDataWithPdf.append('personal_number', formData.personalNumber);
+        formDataWithPdf.append('report', blob, `${formData.personalNumber}_Report.pdf`);
+        formDataWithPdf.append('Patient_ID', selectedPatient); // Add this line
+
+        for (const key in formData) {
+            formDataWithPdf.append(key, formData[key]);
         }
-      );
 
-      const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
-      const formDataWithPdf = new FormData();
-      formDataWithPdf.append('personal_number', formData.personalNumber);
-      formDataWithPdf.append('report', blob, `${formData.personalNumber}_Report.pdf`);
-      for (const key in formData) {
-        formDataWithPdf.append(key, formData[key]);
-      }
+        await axios.post('http://localhost:9004/api/report/save-report-to-db', formDataWithPdf, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                Authorization: `Bearer ${token}`
+            }
+        });
 
-      await axios.post('http://localhost:9004/api/report/save-report-to-db', formDataWithPdf, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      setModalMessage('PDF report saved to database successfully.');
-      setShowModal(true);
-      onSaveSuccess(); // Notify the parent component to refresh the reports
+        setModalMessage('PDF report saved to database successfully.');
+        setShowModal(true);
+        onSaveSuccess(); // Notify the parent component to refresh the reports
     } catch (error) {
-      setModalMessage('Error creating PDF or saving report to database.');
-      setShowModal(true);
-      console.error('Error:', error);
+        setModalMessage('Error creating PDF or saving report to database.');
+        setShowModal(true);
+        console.error('Error:', error);
     }
-  };
+};
+
 
   const closeModal = () => {
     setShowModal(false);

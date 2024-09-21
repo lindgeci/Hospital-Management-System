@@ -1,39 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Modal, Box, TextField, Button, Typography, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
+import { Modal, Box, TextField, Button, Typography, Select, FormHelperText, MenuItem, InputLabel, FormControl } from '@mui/material';
 import ErrorModal from '../../../components/ErrorModal';
 import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
-function CreateInsurance({onClose}) {
+
+function CreateInsurance({ onClose }) {
     const [formData, setFormData] = useState({
         Patient_ID: '',
         Ins_Code: '',
         End_Date: '',
         Provider: '',
-        Plan: '',
-        Co_Pay: '',
-        Coverage: '',
-        Maternity: '',
         Dental: '',
-        Optical: '',
+
     });
     const [patients, setPatients] = useState([]);
     const [insurance, setInsurance] = useState([]);
+    const [patientPhone, setPatientPhone] = useState(''); // New state for the patient's phone
     const [alertMessage, setAlertMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const navigate = useNavigate();
     const token = Cookies.get('token'); 
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevState) => ({
             ...prevState,
             [name]: value,
         }));
+
+        // If the selected patient changes, fetch the new patient's phone
+        if (name === 'Patient_ID') {
+            fetchPatientPhone(value);
+        }
     };
 
     useEffect(() => {
         fetchPatients();
-    }, []);
+        fetchInsurance();
+        const patientId = location.state?.patientId;
+        if (patientId) {
+            setFormData((prevState) => ({ ...prevState, Patient_ID: patientId }));
+            fetchPatientPhone(patientId); // Fetch phone number for the selected patient
+        }
+    }, [location.state]);
 
     const fetchPatients = async () => {
         try {
@@ -43,41 +53,48 @@ function CreateInsurance({onClose}) {
                 }
             });
             setPatients(response.data);
+            if (response.data.length === 1) {
+                setFormData(prev => ({ ...prev, Patient_ID: response.data[0].Patient_ID })); // Auto-select if only one patient
+            }
         } catch (error) {
             console.error('Error fetching patients:', error);
         }
     };
 
-
-    useEffect(() => {
-        // Fetch existing medicines when component mounts
-        fetchInurance();
-    }, []);
-
-    const fetchInurance = async () => {
+    const fetchInsurance = async () => {
         try {
-            const response = await axios.get('http://localhost:9004/api/insurance',{
+            const response = await axios.get('http://localhost:9004/api/insurance', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
-            }
-        )
+            });
             setInsurance(response.data);
         } catch (error) {
             console.error('Error fetching insurance:', error);
         }
     };
 
-    const handleAddInsurance = async () => {
+    const fetchPatientPhone = async (patientId) => {
         try {
-            await axios.post("http://localhost:9004/api/insurance/create", formData,{
+            const response = await axios.get(`http://localhost:9004/api/patient/${patientId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
-            }
-        )
+            });
+            setPatientPhone(response.data.Phone); // Assuming the response contains the Phone field
+        } catch (error) {
+            console.error('Error fetching patient phone:', error);
+        }
+    };
+    const handleAddInsurance = async () => {
+        try {
+            await axios.post("http://localhost:9004/api/insurance/create", formData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             navigate('/dashboard/insurance');
-            window.location.reload(); // Refresh after successful addition
+            window.location.reload();
         } catch (error) {
             console.error('Error adding insurance:', error);
             showAlert('Error adding insurance. Please try again.');
@@ -87,59 +104,69 @@ function CreateInsurance({onClose}) {
     const showAlert = (message) => {
         setAlertMessage(message);
         setShowErrorModal(true);
-        // Automatically hide the error modal after 3 seconds
     };
 
     const handleValidation = async () => {
-        const {
-            Patient_ID,
-            Ins_Code,
-            End_Date,
-            Provider,
-            Plan,
-            Co_Pay,
-            Coverage,
-            Maternity,
-            Dental,
-            Optical,
-        } = formData;
+        const { Patient_ID, Ins_Code, End_Date, Provider, Dental } = formData;
     
-        if (Patient_ID === '' || Ins_Code === '' || End_Date === '' || Provider === '' || Plan === '' || Co_Pay === '' || Coverage === '' || Maternity === '' || Dental === '' || Optical === '') {
+        // Check for required fields
+        if (!Patient_ID || !Ins_Code || !End_Date || !Provider || !Dental) {
             showAlert('All fields are required!');
             return;
         }
-        if (Ins_Code.length < 6) {
-            showAlert("Insurance Code must be at least 6 characters.");
-            return;
-        }
-        if (Patient_ID < 1) {
-            showAlert('Patient ID can not be less than 1');
+    
+        // Validate Ins_Code length
+        if (Ins_Code.length !== 7) {
+            showAlert("Ins_Code must be 7 characters long");
             return;
         }
     
-        const existingInsurance = insurance.find(insurance => insurance.Ins_Code === Ins_Code);
-        if (existingInsurance) {
-            showAlert('Insurance with the same code already exists');
+        // Validate Ins_Code should not start with 0
+        if (Ins_Code.startsWith('0')) {
+            showAlert("Please remove the leading 0 from the Ins_Code.");
             return;
         }
+    
+        // Check if the insurance code already exists across all patients
+        const existingInsuranceWithCode = insurance.find(ins => ins.Ins_Code === Ins_Code);
+        if (existingInsuranceWithCode) {
+            showAlert('This insurance code is already in use.');
+            return;
+        }
+    
+        // Check if insurance already exists for this patient
+        const existingInsuranceForPatient = insurance.find(ins => ins.Patient_ID === Patient_ID);
+        if (existingInsuranceForPatient) {
+            showAlert('This patient already has insurance records. Please choose a different patient.');
+            return;
+        }
+    
+        // Validate End_Date (cannot be in the past)
+        const currentDate = new Date().setHours(0, 0, 0, 0);
+        const selectedEndDate = new Date(End_Date).setHours(0, 0, 0, 0);
+        if (selectedEndDate < currentDate) {
+            showAlert('End date cannot be in the past.');
+            return;
+        }
+    
+        // Check if Patient_ID exists
         try {
-            await axios.get(`http://localhost:9004/api/patient/check/${Patient_ID}`,{
+            await axios.get(`http://localhost:9004/api/patient/check/${Patient_ID}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
-            }
-        )
+            });
             handleAddInsurance();
         } catch (error) {
             console.error('Error checking patient ID:', error);
             showAlert('Patient ID does not exist');
         }
-       
     };
+    
     
 
     return (
-<Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
+        <Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
     <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
         {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
         <Typography variant="h6" component="h1" gutterBottom>Add Insurance</Typography>
@@ -160,6 +187,7 @@ function CreateInsurance({onClose}) {
                     </MenuItem>
                 ))}
             </Select>
+            <FormHelperText>Select the patient for this insurance</FormHelperText>
         </FormControl>
         <TextField
             fullWidth
@@ -169,6 +197,8 @@ function CreateInsurance({onClose}) {
             name="Ins_Code"
             value={formData.Ins_Code}
             onChange={handleChange}
+            type="number"
+            helperText="Enter the insurance code (7 characters long)"
         />
         <TextField
             fullWidth
@@ -180,47 +210,57 @@ function CreateInsurance({onClose}) {
             value={formData.End_Date}
             onChange={handleChange}
             InputLabelProps={{ shrink: true }}
+            inputProps={{ min: new Date().toISOString().split("T")[0] }} // Prevent dates before today
+            helperText="Select the end date for the insurance"
         />
-        {["Provider", "Plan", "Co_Pay", "Maternity", "Dental", "Optical"].map(field => (
-            <FormControl fullWidth margin="normal" key={field}>
-                <InputLabel id={`${field}-label`}>{field}</InputLabel>
-                <Select
-                    labelId={`${field}-label`}
-                    id={field}
-                    name={field}
-                    value={formData[field]}
-                    label={field}
-                    onChange={handleChange}
-                >
-                    <MenuItem value=""><em>None</em></MenuItem>
-                    <MenuItem value="Yes">Yes</MenuItem>
-                    <MenuItem value="No">No</MenuItem>
-                </Select>
-            </FormControl>
-        ))}
-        <FormControl fullWidth margin="normal">
-            <InputLabel id="coverage-label">Coverage</InputLabel>
-            <Select
-                labelId="coverage-label"
-                id="Coverage"
-                name="Coverage"
-                value={formData.Coverage}
-                label="Coverage"
-                onChange={handleChange}
-            >
-                <MenuItem value=""><em>Select Coverage</em></MenuItem>
-                <MenuItem value="25%">25%</MenuItem>
-                <MenuItem value="50%">50%</MenuItem>
-                <MenuItem value="75%">75%</MenuItem>
-                <MenuItem value="100%">100%</MenuItem>
-            </Select>
-        </FormControl>
+       <TextField
+            margin="normal"
+            fullWidth
+            select
+            label="Provider"
+            variant="outlined"
+            id="Provider"
+            name="Provider"
+            value={formData.Provider}
+            onChange={handleChange}
+            helperText="Select if a provider is assigned"
+        >
+            <MenuItem value=''>Select Yes/No</MenuItem>
+            <MenuItem value='No'>No</MenuItem>
+            <MenuItem value='Yes'>Yes</MenuItem>
+        </TextField>
+        <TextField
+            margin="normal"
+            fullWidth
+            select
+            label="Dental"
+            variant="outlined"
+            id="Dental"
+            name="Dental"
+            value={formData.Dental}
+            onChange={handleChange}
+            helperText="Select if dental coverage is included"
+        >
+            <MenuItem value=''>Select Yes/No</MenuItem>
+            <MenuItem value='No'>No</MenuItem>
+            <MenuItem value='Yes'>Yes</MenuItem>
+        </TextField>
+        <TextField
+                    fullWidth
+                    label="Patient Phone"
+                    variant="outlined"
+                    margin="normal"
+                    value={patientPhone}
+                    readOnly
+                    helperText="This is the phone number of the selected patient"
+                />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
             <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>
             <Button variant="outlined" onClick={onClose}>Cancel</Button>
         </Box>
     </Box>
 </Modal>
+
     );
 }
 

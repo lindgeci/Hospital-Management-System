@@ -88,12 +88,8 @@ function Insurance({
         { field: 'Ins_Code', headerName: 'Ins. Code', flex: 1  },
         { field: 'End_Date', headerName: 'End Date', flex: 1  },
         { field: 'Provider', headerName: 'Provider', flex: 1  },
-        { field: 'Plan', headerName: 'Plan', flex: 1  },
-        { field: 'Co_Pay', headerName: 'Co-Pay', flex: 1  },
-        { field: 'Coverage', headerName: 'Coverage', flex: 1  },
-        { field: 'Maternity', headerName: 'Maternity', flex: 1  },
         { field: 'Dental', headerName: 'Dental', flex: 1  },
-        { field: 'Optical', headerName: 'Optical', flex: 1  },
+
         {
             field: 'update',
             headerName: 'Update',

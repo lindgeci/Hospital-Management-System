@@ -98,11 +98,11 @@ function CreatePatient({ onClose }) {
             return;
         }
 
-        const existingPatient = patients.find(patient => patient.Patient_Fname === Patient_Fname);
-        if (existingPatient) {
-            showAlert('Patient with the same name already exists');
-            return;
-        }
+        // const existingPatient = patients.find(patient => patient.Patient_Fname === Patient_Fname);
+        // if (existingPatient) {
+        //     showAlert('Patient with the same name already exists');
+        //     return;
+        // }
 
         handleAddPatient();
     };
@@ -126,6 +126,7 @@ function CreatePatient({ onClose }) {
                     variant="outlined"
                     id="Personal_Number"
                     name="Personal_Number"
+                    type="number"
                     placeholder="Enter Personal Number"
                     value={formData.Personal_Number}
                     onChange={handleChange}

@@ -117,26 +117,40 @@ const saveReportToDB = async (req, res) => {
         console.log('Request body:', req.body);
 
         let personalNumber = req.body.personalNumber;
+        let patientId = req.body.Patient_ID;
 
         console.log('Received personalNumber:', personalNumber);
+        console.log('Received Patient_ID:', patientId);
 
+        // Ensure personalNumber is a string
         if (typeof personalNumber === 'number') {
             personalNumber = personalNumber.toString();
         }
-
+        
         if (typeof personalNumber !== 'string') {
             throw new Error('personalNumber must be a string');
         }
 
+        // Ensure file is present
         if (!req.files || !req.files.report) {
             throw new Error('PDF report file is missing');
         }
 
+        // Ensure Patient_ID is present
+        if (!patientId) {
+            throw new Error('Patient_ID is required');
+        }
+
         const pdfReportData = req.files.report.data;
 
+        // Log the data size for debugging
+        console.log('PDF report data size:', pdfReportData.length);
+
+        // Create report in the database
         const pdfReport = await PdfReport.create({
             personal_number: personalNumber,
             report: pdfReportData,
+            Patient_ID: patientId
         });
 
         res.status(200).json({ message: 'Report saved to database successfully', pdfReport });
@@ -145,6 +159,7 @@ const saveReportToDB = async (req, res) => {
         res.status(500).json({ error: 'Error saving report to database', message: error.message });
     }
 };
+
 
 const fetchReportsFromDB = async (req, res) => {
     try {
