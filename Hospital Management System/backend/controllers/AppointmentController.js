@@ -3,7 +3,7 @@ const Staff = require('../models/Staff');
 const Department = require('../models/Department');
 const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');
-
+const { Op } = require('sequelize'); 
 // Utility function to validate email format
 const validateEmail = (email) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -130,39 +130,124 @@ const FindSingleAppointment = async (req, res) => {
 
 const AddAppointment = async (req, res) => {
     try {
-        const { Scheduled_On, Date, Time, Doctor_ID, Patient_ID } = req.body;
+        const { Scheduled_On, Date: appointmentDate, Time, Doctor_ID, Patient_ID } = req.body;
 
+        // Validate input fields
+        if (!Patient_ID) {
+            return res.status(400).json({ error: 'Patient_ID cannot be empty' });
+        }
+        if (!Doctor_ID) {
+            return res.status(400).json({ error: 'Doctor_ID cannot be empty' });
+        }
+        if (!appointmentDate) {
+            return res.status(400).json({ error: 'Date cannot be empty' });
+        }
+        if (!Time) {
+            return res.status(400).json({ error: 'Time cannot be empty' });
+        }
+        if (!Scheduled_On) {
+            return res.status(400).json({ error: 'Scheduled_On cannot be empty' });
+        }
+
+        // Ensure that Scheduled_On and Date are valid
+        const today = new Date();
+        const parsedScheduledDate = new Date(Scheduled_On);
+        const parsedAppointmentDate = new Date(appointmentDate);
+
+        if (parsedScheduledDate < new Date(today.setHours(0, 0, 0, 0))) {
+            return res.status(400).json({ error: 'Scheduled_On cannot be in the past' });
+        }
+
+        if (parsedAppointmentDate < new Date(today.setHours(0, 0, 0, 0))) {
+            return res.status(400).json({ error: 'Date cannot be in the past' });
+        }
+
+        // Check if the doctor is already booked for the same date and time
+        const existingAppointment = await Appointment.findOne({
+            where: {
+                Doctor_ID,
+                Scheduled_On: parsedScheduledDate,
+                Time,
+            },
+        });
+
+        if (existingAppointment) {
+            return res.status(409).json({ error: 'Doctor is busy at this time, please choose another date or time.' });
+        }
+
+        // Create new appointment record
         const newAppointment = await Appointment.create({
-            Scheduled_On,
-            Date,
+            Scheduled_On: parsedScheduledDate,
+            Date: parsedAppointmentDate,
             Time,
             Doctor_ID,
-            Patient_ID
+            Patient_ID,
         });
+
         res.json({ success: true, message: 'Appointment added successfully', data: newAppointment });
     } catch (error) {
-        console.error('Error adding appointment:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error('Error adding appointment:', error.message);
+        res.status(500).json({ error: error.message });
     }
 };
 
+
+
 const UpdateAppointment = async (req, res) => {
     try {
-        const { Scheduled_On, Date, Time, Doctor_ID, Patient_ID } = req.body;
+        const { Scheduled_On, Time, Doctor_ID, Patient_ID } = req.body;
 
+        // Validation for required fields
+        if (!Scheduled_On) {
+            return res.status(400).json({ error: 'Scheduled_On cannot be empty' });
+        }
+        if (!Time) {
+            return res.status(400).json({ error: 'Time cannot be empty' });
+        }
+        if (!Doctor_ID) {
+            return res.status(400).json({ error: 'Doctor_ID cannot be empty' });
+        }
+        if (!Patient_ID) {
+            return res.status(400).json({ error: 'Patient_ID cannot be empty' });
+        }
+
+        const today = new Date();
+        const parsedScheduledDate = new Date(Scheduled_On);
+        if (parsedScheduledDate < new Date(today.setHours(0, 0, 0, 0))) {
+            return res.status(400).json({ error: 'Scheduled_On cannot be in the past' });
+        }
+
+        // Check if the doctor is already booked for the same date and time
+        const existingAppointment = await Appointment.findOne({
+            where: {
+                Doctor_ID,
+                Scheduled_On: parsedScheduledDate,
+                Time,
+                Appoint_ID: { [Op.ne]: req.params.id } // Exclude the current appointment
+            },
+        });
+
+        if (existingAppointment) {
+            return res.status(409).json({ error: 'Doctor is busy at this time, please choose another date or time.' });
+        }
+
+        // Update only the Scheduled_On, Time, Doctor_ID, and Patient_ID fields (not Date)
         const updated = await Appointment.update(
-            { Scheduled_On, Date, Time, Doctor_ID, Patient_ID },
+            { Scheduled_On: parsedScheduledDate, Time, Doctor_ID, Patient_ID },
             { where: { Appoint_ID: req.params.id } }
         );
+
         if (updated[0] === 0) {
             return res.status(404).json({ error: 'Appointment not found or not updated' });
         }
+
         res.json({ success: true, message: 'Appointment updated successfully' });
     } catch (error) {
         console.error('Error updating appointment:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 const DeleteAppointment = async (req, res) => {
     try {

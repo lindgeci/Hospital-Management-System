@@ -1,6 +1,6 @@
 const MedicalHistory = require('../models/MedicalHistory');
 const Patient = require('../models/Patient');
-
+const { Op } = require('sequelize'); 
 const getPatientByEmail = async (email) => {
     try {
         const patient = await Patient.findOne({
@@ -81,11 +81,19 @@ const AddMedicalHistory = async (req, res) => {
             return res.status(400).json({ error: 'Patient ID, Allergies, and Pre-Conditions are required.' });
         }
 
+        // Check if medical history already exists for this patient
+        const existingHistory = await MedicalHistory.findOne({ where: { Patient_ID } });
+
+        if (existingHistory) {
+            return res.status(400).json({ error: 'This patient already has a medical history.' });
+        }
+
         const newMedicalHistory = await MedicalHistory.create({
             Patient_ID,
             Allergies,
             Pre_Conditions
         });
+
         res.json({ success: true, message: 'Medical history added successfully', data: newMedicalHistory });
     } catch (error) {
         console.error('Error adding medical history:', error);
@@ -96,20 +104,30 @@ const AddMedicalHistory = async (req, res) => {
 const UpdateMedicalHistory = async (req, res) => {
     try {
         const { Patient_ID, Allergies, Pre_Conditions } = req.body;
+
+        // Find if there is another medical history for the same patient but with a different Record_ID
+        const existingHistory = await MedicalHistory.findOne({ where: { Patient_ID, Record_ID: { [Op.ne]: req.params.id } } });
+
+        if (existingHistory) {
+            return res.status(400).json({ error: 'This patient already has a medical history.' });
+        }
+
         const updated = await MedicalHistory.update(
             { Patient_ID, Allergies, Pre_Conditions },
             { where: { Record_ID: req.params.id } }
         );
+
         if (updated[0] === 0) {
-            res.status(404).json({ error: 'Medical history not found or not updated' });
-            return;
+            return res.status(404).json({ error: 'Medical history not found or not updated' });
         }
+
         res.json({ success: true, message: 'Medical history updated successfully' });
     } catch (error) {
         console.error('Error updating medical history:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 const DeleteMedicalHistory = async (req, res) => {
     try {

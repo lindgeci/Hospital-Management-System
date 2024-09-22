@@ -7,24 +7,29 @@ import CreateMedicalHistory from './MedicalHistory/CreateMedicalHistory';
 
 export function MedicalHistorys() {
     const [showCreateForm, setShowCreateForm] = useState(false);
-    const [showUpdateForm, setShowUpdateForm] = useState(false);
+    const [showUpdateForm, setShowUpdateForm] = useState(false); // Add this state
     const [selectedMedicalHistoryId, setSelectedMedicalHistoryId] = useState(null); 
 
     const handleUpdateButtonClick = (medicalHistoryId) => {
         setSelectedMedicalHistoryId(medicalHistoryId);
-        setShowUpdateForm((prevState) => prevState === medicalHistoryId ? null : medicalHistoryId);
         setShowCreateForm(false); // Close create form if open
+        setShowUpdateForm(true); // Show the update form
     };
 
     const handleDelete = async (id) => {
         try {
             await axios.delete(`http://localhost:9004/api/medicalhistory/delete/${id}`);
             setShowCreateForm(false);
-            setShowUpdateForm(false);
-            // Fetch and update insurance list here if needed
+            setShowUpdateForm(false); // Close update form if open
+            setSelectedMedicalHistoryId(null); // Reset selected ID on delete
         } catch (error) {
             console.error('Error deleting medical history:', error);
         }
+    };
+
+    const handleCloseUpdate = () => {
+        setShowUpdateForm(false); // Reset the update form visibility
+        setSelectedMedicalHistoryId(null); // Reset the selected ID
     };
 
     return (
@@ -33,15 +38,19 @@ export function MedicalHistorys() {
                 <MedicalHistory
                     showCreateForm={showCreateForm}
                     setShowCreateForm={setShowCreateForm}
-                    setShowUpdateForm={setShowUpdateForm}
-                    setSelectedMedicalHistoryId={setSelectedMedicalHistoryId}
-                    showUpdateForm={showUpdateForm}
                     handleUpdateButtonClick={handleUpdateButtonClick}
                     handleDelete={handleDelete}
+                    setSelectedMedicalHistoryId={setSelectedMedicalHistoryId} // Pass down the setter
+                    setShowUpdateForm={setShowUpdateForm} // Pass down the setter for update form
                 />
                 
                 {showCreateForm && <CreateMedicalHistory onClose={() => setShowCreateForm(false)}/>}
-                {showUpdateForm && <UpdateMedicalHistory  id={selectedMedicalHistoryId} setShowUpdateForm={setShowUpdateForm} onClose={() => setShowUpdateForm(false)}/>} 
+                {showUpdateForm && (
+                    <UpdateMedicalHistory 
+                        id={selectedMedicalHistoryId} 
+                        onClose={handleCloseUpdate} 
+                    /> 
+                )}
             </div>
         </>
     );

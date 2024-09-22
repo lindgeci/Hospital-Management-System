@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { Box, Button, Typography, Select, MenuItem, InputLabel, FormHelperText, FormControl, Modal, TextField } from '@mui/material';
 import ErrorModal from '../../../components/ErrorModal';
-import { Box, TextField, Button, Typography, Select, MenuItem, InputLabel, FormControl, Modal } from '@mui/material';
 import Cookies from 'js-cookie';
 
 function CreateBill({ onClose }) {
     const [formData, setFormData] = useState({
         Patient_ID: '',
-        Date_Issued: '',
+        Date_Issued: new Date().toISOString().split('T')[0],
         Description: '',
-        Amount: '',
-        Payment_Status: '',
+        Amount: Math.floor(Math.random() * (50 - 10 + 1)) + 10,
+        Payment_Status: 'Pending',
+        Payment_Type: '' // Add Payment_Type to the state
     });
     const [patients, setPatients] = useState([]);
+    const [patientPersonalNumber, setPatientPersonalNumber] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const token = Cookies.get('token');
@@ -36,12 +38,29 @@ function CreateBill({ onClose }) {
         }
     };
 
+    const fetchPatientPersonalNumber = async (patientId) => {
+        try {
+            const response = await axios.get(`http://localhost:9004/api/patient/${patientId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            setPatientPersonalNumber(response.data.Personal_Number);
+        } catch (error) {
+            console.error('Error fetching patient personal number:', error);
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevState) => ({
             ...prevState,
             [name]: value,
         }));
+
+        if (name === 'Patient_ID') {
+            fetchPatientPersonalNumber(value);
+        }
     };
 
     const handleAddBill = async () => {
@@ -52,7 +71,7 @@ function CreateBill({ onClose }) {
                 }
             });
             navigate('/dashboard/bills');
-            window.location.reload(); // Refresh after successful addition
+            window.location.reload();
         } catch (error) {
             console.error('Error adding Bill:', error);
             showAlert(error.response?.data?.message || 'Error adding bill. Please try again.');
@@ -91,30 +110,43 @@ function CreateBill({ onClose }) {
     };
 
     return (
-            <Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
-                <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
-                    {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
-                    <Typography variant="h6" component="h1" gutterBottom>Add Bill</Typography>
-                    <FormControl fullWidth variant="outlined" margin="normal">
-                        <InputLabel id="patient-select-label">Patient</InputLabel>
-                        <Select
-                            labelId="patient-select-label"
-                            id="visitPatientID"
-                            name="Patient_ID"
-                            value={formData.Patient_ID}
-                            onChange={handleChange}
-                            label="Patient"
-                        >
-                            <MenuItem value=""><em>Select Patient</em></MenuItem>
-                            {patients.map(patient => (
-                                <MenuItem key={patient.Patient_ID} value={patient.Patient_ID}>
-                                    {`${patient.Patient_Fname} ${patient.Patient_Lname}`}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-      {/* Date Issued */}
-      <TextField
+        <Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
+            <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
+                {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
+                <Typography variant="h6" component="h1" gutterBottom>Add Bill</Typography>
+
+                <FormControl fullWidth variant="outlined" margin="normal">
+                    <InputLabel id="patient-select-label">Patient</InputLabel>
+                    <Select
+                        labelId="patient-select-label"
+                        name="Patient_ID"
+                        value={formData.Patient_ID}
+                        onChange={handleChange}
+                        label="Patient"
+                    >
+                        <MenuItem value=""><em>Select Patient</em></MenuItem>
+                        {patients.map(patient => (
+                            <MenuItem key={patient.Patient_ID} value={patient.Patient_ID}>
+                                {`${patient.Patient_Fname} ${patient.Patient_Lname}`}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                    <FormHelperText>Select the patient for this bill</FormHelperText>
+                </FormControl>
+
+                {/* Patient Personal Number Field */}
+                <TextField
+                    fullWidth
+                    label="Patient Personal Number"
+                    variant="outlined"
+                    margin="normal"
+                    value={patientPersonalNumber}
+                    readOnly
+                    helperText="This is the personal number of the selected patient"
+                />
+
+                {/* Date Issued */}
+                <TextField
                     fullWidth
                     margin="normal"
                     label="Date Issued"
@@ -125,37 +157,49 @@ function CreateBill({ onClose }) {
                     value={formData.Date_Issued}
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
+                    disabled
+                    helperText="The date the bill was issued"
                 />
-            {/* Description */}
-            <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Description"
-                    variant="outlined"
-                    id="Description"
-                    name="Description"
-                    placeholder="Enter Description"
-                    value={formData.Description}
-                    onChange={handleChange}
-                />
-               
+
+                {/* Description with Payment Type Dropdown */}
+                <FormControl fullWidth variant="outlined" margin="normal">
+                    <InputLabel id="description-select-label">Description</InputLabel>
+                    <Select
+                        labelId="description-select-label"
+                        id="Description"
+                        name="Description"
+                        value={formData.Description}
+                        onChange={handleChange}
+                        label="Description"
+                    >
+                        <MenuItem value=""><em>Select Description</em></MenuItem>
+                        <MenuItem value="pagesa per kontrolle">Pagesa per Kontroll</MenuItem>
+                        <MenuItem value="pagesa per terapi">Pagesa per Terapi</MenuItem>
+                        <MenuItem value="others">Others</MenuItem>
+                    </Select>
+                    <FormHelperText>Select the type of payment for this bill</FormHelperText>
+                </FormControl>
+
                 {/* Amount */}
                 <TextField
                     fullWidth
-                    margin="Amount"
+                    margin="normal"
                     label="Amount"
                     variant="outlined"
                     type="number"
                     id="Amount"
                     name="Amount"
+                    placeholder="Amount"
                     value={formData.Amount}
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
+                    inputProps={{ min: 10, max: 50 }}
+                    helperText="Amount should be between 10 and 50"
                 />
-                
+
                 {/* Payment Status */}
                 <FormControl fullWidth variant="outlined" margin="normal">
-                    <InputLabel id="blood-type-select-label">Payment Status</InputLabel>
+                    <InputLabel id="payment-status-select-label">Payment Status</InputLabel>
                     <Select
                         labelId="payment-status-select-label"
                         id="Payment_Status"
@@ -164,12 +208,13 @@ function CreateBill({ onClose }) {
                         onChange={handleChange}
                         label="Payment Status"
                     >
-                        <MenuItem value=""><em>Select Payment Status</em></MenuItem>
                         <MenuItem value="Pending">Pending</MenuItem>
                         <MenuItem value="Paid">Paid</MenuItem>
                         <MenuItem value="Failed">Failed</MenuItem>
                     </Select>
+                    <FormHelperText>Select the payment status of the bill (default is Pending)</FormHelperText>
                 </FormControl>
+
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>
                     <Button variant="outlined" onClick={onClose}>Cancel</Button>
@@ -178,4 +223,5 @@ function CreateBill({ onClose }) {
         </Modal>
     );
 }
+
 export default CreateBill;

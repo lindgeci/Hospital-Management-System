@@ -11,8 +11,8 @@ export function Emergency_Contacts() {
 
     const handleUpdateButtonClick = (emergencyContactId) => {
         setSelectedEmergency_ContactId(emergencyContactId);
-        setShowUpdateForm((prevState) => prevState === emergencyContactId ? null : emergencyContactId);
-        setShowCreateForm(false); // Close create form if open
+        setShowUpdateForm(true);
+        setShowCreateForm(false);
     };
 
     const handleDelete = async (id) => {
@@ -20,29 +20,30 @@ export function Emergency_Contacts() {
             await axios.delete(`http://localhost:9004/api/emergency_contact/delete/${id}`);
             setShowCreateForm(false);
             setShowUpdateForm(false);
-            // Fetch and update emergency contact list here if needed
+            setSelectedEmergency_ContactId(null);
         } catch (error) {
             console.error('Error deleting emergency contact:', error);
         }
     };
 
-
     return (
-        <>
-            <div>
-                <Emergency_Contact
-                    showCreateForm={showCreateForm}
-                    setShowCreateForm={setShowCreateForm}
-                    setShowUpdateForm={setShowUpdateForm}
-                    setSelectedEmergency_ContactId={setSelectedEmergency_ContactId}
-                    showUpdateForm={showUpdateForm}
-                    handleUpdateButtonClick={handleUpdateButtonClick}
-                    handleDelete={handleDelete}
+        <div>
+            <Emergency_Contact
+                showCreateForm={showCreateForm}
+                setShowCreateForm={setShowCreateForm}
+                handleUpdateButtonClick={handleUpdateButtonClick}
+                handleDelete={handleDelete}
+                setSelectedEmergency_ContactId={setSelectedEmergency_ContactId}
+                setShowUpdateForm={setShowUpdateForm} // Ensure this is passed
+            />
+            {showCreateForm && <CreateEmergency_Contact onClose={() => setShowCreateForm(false)} />}
+            {showUpdateForm && (
+                <UpdateEmergency_Contact 
+                    id={selectedEmergency_ContactId} 
+                    onClose={() => setShowUpdateForm(false)} 
                 />
-                {showCreateForm && <CreateEmergency_Contact onClose={() => setShowCreateForm(false)} />}
-                {showUpdateForm && <UpdateEmergency_Contact id={selectedEmergency_ContactId} setShowUpdateForm={setShowUpdateForm} onClose={() => setShowUpdateForm(false)}/>}
-            </div>
-        </>
+            )}
+        </div>
     );
 }
 

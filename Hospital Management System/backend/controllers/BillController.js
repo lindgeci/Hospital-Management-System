@@ -93,6 +93,17 @@ const AddBill = async (req, res) => {
             return res.status(400).json({ error: 'All fields are required' });
         }
 
+        // Check if Date_Issued is in the past or today
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0); // Set to midnight
+
+        const issuedDate = new Date(Date_Issued);
+        issuedDate.setHours(0, 0, 0, 0); // Set to midnight
+
+        if (issuedDate < currentDate) {
+            return res.status(400).json({ error: 'Date_Issued cannot be in the past or today' });
+        }
+
         const newBill = await Bill.create({
             Patient_ID,
             Date_Issued,
@@ -113,12 +124,24 @@ const UpdateBill = async (req, res) => {
             Date_Issued,
             Description,
             Amount,
-            Payment_Status
+            Payment_Status,
+            Patient_ID // Include Patient_ID here
         } = req.body;
 
         // Validations
-        if (!Date_Issued || !Amount) {
+        if (!Date_Issued || !Amount || !Patient_ID) {
             return res.status(400).json({ error: 'All fields are required' });
+        }
+
+        // Check if Date_Issued is in the past or today
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0); // Set to midnight
+
+        const issuedDate = new Date(Date_Issued);
+        issuedDate.setHours(0, 0, 0, 0); // Set to midnight
+
+        if (issuedDate < currentDate) {
+            return res.status(400).json({ error: 'Date_Issued cannot be in the past or today' });
         }
 
         const updated = await Bill.update(
@@ -126,10 +149,12 @@ const UpdateBill = async (req, res) => {
                 Date_Issued,
                 Description,
                 Amount,
-                Payment_Status
+                Payment_Status,
+                Patient_ID // Include Patient_ID in the update
             },
             { where: { Bill_ID: req.params.id } }
         );
+
         if (updated[0] === 0) {
             res.status(404).json({ error: 'Bill not found or not updated' });
             return;
@@ -140,6 +165,9 @@ const UpdateBill = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+
+
 
 const DeleteBill = async (req, res) => {
     try {

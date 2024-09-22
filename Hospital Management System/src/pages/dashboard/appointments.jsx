@@ -11,8 +11,8 @@ export function Appointments() {
 
     const handleUpdateButtonClick = (appointmentId) => {
         setSelectedAppointmentId(appointmentId);
-        setShowUpdateForm((prevState) => prevState === appointmentId ? null : appointmentId);
         setShowCreateForm(false); // Close create form if open
+        setShowUpdateForm(true); // Show the update form
     };
 
     const handleDelete = async (id) => {
@@ -20,24 +20,35 @@ export function Appointments() {
             await axios.delete(`http://localhost:9004/api/appointment/delete/${id}`);
             setShowCreateForm(false);
             setShowUpdateForm(false);
+            setSelectedAppointmentId(null); // Reset selected ID on delete
             // Fetch and update appointment list here if needed
         } catch (error) {
             console.error('Error deleting appointment:', error);
         }
     };
 
+    const handleCloseUpdate = () => {
+        setShowUpdateForm(false); // Reset the update form visibility
+        setSelectedAppointmentId(null); // Reset the selected ID
+    };
+
     return (
         <div>
-            <Appointment
-                setShowCreateForm={setShowCreateForm}
-                setShowUpdateForm={setShowUpdateForm} 
-                setSelectedAppointmentId={setSelectedAppointmentId} 
-                showUpdateForm={showUpdateForm}
-                handleUpdateButtonClick={handleUpdateButtonClick}
-                handleDelete={handleDelete}
-            />
+<Appointment
+    setShowCreateForm={setShowCreateForm}
+    setShowUpdateForm={setShowUpdateForm} 
+    setSelectedAppointmentId={setSelectedAppointmentId} 
+    handleUpdateButtonClick={handleUpdateButtonClick}
+    handleDelete={handleDelete}
+/>
+
             {showCreateForm && <CreateAppointment onClose={() => setShowCreateForm(false)} />}
-            {showUpdateForm && <UpdateAppointment id={selectedAppointmentId} setShowUpdateForm={setShowUpdateForm} onClose={() => setShowUpdateForm(false)} />} 
+            {showUpdateForm && (
+                <UpdateAppointment 
+                    id={selectedAppointmentId} 
+                    onClose={handleCloseUpdate} 
+                />
+            )}
         </div>
     );
 }
