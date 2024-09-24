@@ -33,7 +33,6 @@ export function Patients() {
                     setShowCreateForm={setShowCreateForm}
                     setShowUpdateForm={setShowUpdateForm} 
                     setSelectedPatientId={setSelectedPatientId}
-                    showUpdateForm={showUpdateForm}
                     handleUpdateButtonClick={handleUpdateButtonClick}
                     handleDelete={handleDelete} // Corrected state setter function name
                 />

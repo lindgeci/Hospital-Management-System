@@ -113,7 +113,16 @@ function UpdateEmergency_Contact({ id, onClose }) {
             showAlert("Invalid Patient ID.");
             return;
         }
-
+        if (!/^\d+$/.test(formData.Phone)) {
+            showAlert('Phone number can only contain digits.');
+            return;
+        }
+        const validateName = (name) => /^[A-Za-z]+$/.test(name);
+        
+        if (!validateName(formData.Contact_Name)) {
+            showAlert('Contact Name can only contain numbers');
+            return;
+        }
         if (
             formData.Contact_Name === originalData.Contact_Name &&
             formData.Phone === originalData.Phone &&

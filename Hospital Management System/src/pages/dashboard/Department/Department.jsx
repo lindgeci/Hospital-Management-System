@@ -58,10 +58,10 @@ function Department({
     };
     
     const columns = [
-        { field: 'Dept_ID', headerName: 'ID', width: 310 },
-        { field: 'Dept_head', headerName: 'Department Head', width: 310 },
-        { field: 'Dept_name', headerName: 'Department Name', width: 310 },
-        { field: 'Emp_Count', headerName: 'Employee Count', width: 310 },
+        { field: 'Dept_ID', headerName: 'ID', flex: 1 },
+        { field: 'Dept_head', headerName: 'Department Head', flex: 1 },
+        { field: 'Dept_name', headerName: 'Department Name', flex: 1 },
+        { field: 'Emp_Count', headerName: 'Employee Count', flex: 1 },
         {
             field: 'update',
             headerName: 'Update',

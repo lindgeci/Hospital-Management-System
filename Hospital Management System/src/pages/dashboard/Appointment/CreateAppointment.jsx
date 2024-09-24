@@ -236,7 +236,7 @@ function CreateAppointment({ onClose }) {
                     helperText="This is the qualifications of the selected doctor"
                 />
 
-                <TextField
+                {/* <TextField
                     fullWidth
                     margin="normal"
                     label="Date"
@@ -249,7 +249,7 @@ function CreateAppointment({ onClose }) {
                     InputLabelProps={{ shrink: true }}
                     disabled
                     helperText="Automatically set to today's date"
-                />
+                /> */}
 
 <FormControl fullWidth variant="outlined" margin="normal">
     <InputLabel id="time-select-label">Time</InputLabel>

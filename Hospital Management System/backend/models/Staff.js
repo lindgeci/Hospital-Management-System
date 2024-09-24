@@ -40,15 +40,7 @@ const Staff = sequelize.define('Staff', {
       key: 'Dept_ID',
     },
   },
-  SSN: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
   DOB: {
-    type: DataTypes.DATE,
-    allowNull: false,
-  },
-  Date_Separation: {
     type: DataTypes.DATE,
     allowNull: false,
   },

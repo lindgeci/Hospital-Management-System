@@ -181,7 +181,7 @@ function UpdateBill({ id, onClose }) {
                     helperText="This is the personal number of the selected patient"
                 />
 
-                <TextField
+                {/* <TextField
                     fullWidth
                     margin="normal"
                     label="Date Issued"
@@ -194,7 +194,7 @@ function UpdateBill({ id, onClose }) {
                     InputLabelProps={{ shrink: true }}
                     disabled
                      helperText="The date the bill was issued"
-                />
+                /> */}
 
                 <TextField
                     fullWidth

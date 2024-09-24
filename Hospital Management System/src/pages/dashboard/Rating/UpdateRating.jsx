@@ -93,6 +93,11 @@ function UpdateRating({ id, onClose }) {
             showAlert("Comment cannot be empty.");
             return;
         }
+        // Validate that comments do not contain numbers
+        if (/\d/.test(formData.Comments)) {
+            showAlert("Comments cannot contain numbers.");
+            return;
+        }
         if (!formData.Rating || formData.Rating < 1 || formData.Rating > 5) {
             showAlert("Rating must be between 1 and 5.");
             return;
@@ -105,7 +110,7 @@ function UpdateRating({ id, onClose }) {
             showAlert('Character limit reached (30).');
             return;
         }
-
+    
         try {
             const currentDate = new Date().toISOString().slice(0, 10);
             await axios.put(`http://localhost:9004/api/rating/update/${id}`, {
@@ -118,7 +123,7 @@ function UpdateRating({ id, onClose }) {
                     'Authorization': `Bearer ${token}`
                 }
             });
-
+    
             navigate('/dashboard/rating');
             window.location.reload();
         } catch (error) {
@@ -126,6 +131,7 @@ function UpdateRating({ id, onClose }) {
             showAlert('Error updating rating. Please try again.');
         }
     };
+    
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -151,6 +157,7 @@ function UpdateRating({ id, onClose }) {
                     name="Emp_ID"
                     value={formData.Emp_ID}
                     onChange={handleChange}
+                    helperText="Select the employee for whom you are updating the rating."
                 >
                     <MenuItem value=''>Select</MenuItem>
                     {staff.map((staff) => (
@@ -159,7 +166,6 @@ function UpdateRating({ id, onClose }) {
                         </MenuItem>
                     ))}
                 </TextField>
-                <FormHelperText>Select the employee for whom you are updating the rating.</FormHelperText>
 
                 <TextField
                     margin="normal"
@@ -182,13 +188,13 @@ function UpdateRating({ id, onClose }) {
                     name="Rating"
                     value={formData.Rating}
                     onChange={handleChange}
+                    helperText="Select a rating from 1 to 5."
                 >
                     <MenuItem value='' disabled>Select Rating</MenuItem>
                     {[1, 2, 3, 4, 5].map(rating => (
                         <MenuItem key={rating} value={rating}>{rating}</MenuItem>
                     ))}
                 </TextField>
-                <FormHelperText>Select a rating from 1 to 5.</FormHelperText>
 
                 <TextField
                     margin="normal"
@@ -199,10 +205,10 @@ function UpdateRating({ id, onClose }) {
                     name="Comments"
                     value={formData.Comments}
                     onChange={handleChange}
+                    helperText="Enter your comments (max 30 characters).."
                 />
-                <FormHelperText>Enter your comments (max 30 characters).</FormHelperText>
-
-                <TextField
+               
+                {/* <TextField
                     margin="normal"
                     fullWidth
                     label="Date"
@@ -212,7 +218,7 @@ function UpdateRating({ id, onClose }) {
                     value={formData.Date}
                     onChange={handleChange}
                     disabled
-                />
+                /> */}
                 
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleUpdateRating} sx={{ mr: 1 }}>Submit</Button>

@@ -1,9 +1,9 @@
 import axios from 'axios';
-import React, { useState, useEffect } from 'react'; // Added useEffect
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, Box, TextField, Button, Typography, InputAdornment } from '@mui/material';
 import ErrorModal from '../../../components/ErrorModal';
-import Cookies from 'js-cookie'; // Import js-cookie
+import Cookies from 'js-cookie';
 
 function CreateDepartment({ onClose }) {
     const [formData, setFormData] = useState({
@@ -24,11 +24,11 @@ function CreateDepartment({ onClose }) {
 
     const fetchDepartments = async () => {
         try {
-            const response = await axios.get('http://localhost:9004/api/medicine',{
+            const response = await axios.get('http://localhost:9004/api/medicine', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
-            })
+            });
             setDepartments(response.data);
         } catch (error) {
             console.error('Error fetching departments:', error);
@@ -49,8 +49,7 @@ function CreateDepartment({ onClose }) {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
-            }
-            )
+            });
             navigate('/dashboard/department');
             window.location.reload();
         } catch (error) {
@@ -62,31 +61,44 @@ function CreateDepartment({ onClose }) {
     const handleValidation = () => {
         const { Dept_head, Dept_name, Emp_Count } = formData;
 
-        if (!Dept_head.trim() || !Dept_name.trim() || !Emp_Count ==='') {
+        if (!Dept_head.trim() || !Dept_name.trim() || Emp_Count === '') {
             showAlert('All fields are required');
             return;
         }
         if (Dept_head.length < 2) {
-            showAlert('Head can not be less than 1');
+            showAlert('Head name must be at least 2 characters long');
             return;
         }
         if (Dept_name.length < 2) {
-            showAlert('Name can not be less than 1');
+            showAlert('Department name must be at least 2 characters long');
             return;
         }
-        if (Emp_Count < 1) {
-            showAlert('employee can not be less than 1');
+        if (Emp_Count < 7) {
+            showAlert('Employee count cannot be less than 7');
             return;
         }
-
-       // Check if department with the same name already exists
+        if (Emp_Count > 12) {
+            showAlert('Employee count cannot be more than 12');
+            return;
+        }
+        // Check if comments contain any numbers
+        if (/\d/.test(Dept_head)) {
+            showAlert('Department Head cannot contain numbers');
+            return;
+        }
+        // Check if comments contain any numbers
+        if (/\d/.test(Dept_name)) {
+            showAlert('Department Name cannot contain numbers');
+            return;
+        }
+        // Check if department with the same name already exists
         const existingDepartment = departments.find(department => department.Dept_name === Dept_name);
         if (existingDepartment) {
             showAlert('Department with the same name already exists');
             return;
         }
 
-    // Proceed with form submission after successful validation
+        // Proceed with form submission after successful validation
         handleAddDepartment();
     };
 
@@ -98,20 +110,23 @@ function CreateDepartment({ onClose }) {
     return (
         <Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
             <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
-            {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
-            <Typography variant="h6" component="h1" gutterBottom>Add Department</Typography>
-            <Box mb={2}>
-                <TextField                    
-                    fullWidth
-                    label="Department Head"
-                    variant="outlined"
-                    id="dept_head"
-                    name="Dept_head"
-                    type="text"
-                    value={formData.Dept_head}
-                    onChange={handleChange}
-                        />
+                {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
+                <Typography variant="h6" component="h1" gutterBottom>Add Department</Typography>
+                
+                <Box mb={2}>
+                    <TextField                    
+                        fullWidth
+                        label="Department Head"
+                        variant="outlined"
+                        id="dept_head"
+                        name="Dept_head"
+                        type="text"
+                        value={formData.Dept_head}
+                        onChange={handleChange}
+                        helperText="Enter the name of the department head (at least 2 characters)."
+                    />
                 </Box>
+                
                 <Box mb={2}>
                     <TextField
                         fullWidth 
@@ -122,23 +137,27 @@ function CreateDepartment({ onClose }) {
                         type="text"
                         value={formData.Dept_name}
                         onChange={handleChange}
-                        />
+                        helperText="Enter the department name (at least 2 characters)."
+                    />
                 </Box>
+                
                 <Box mb={2}>
                     <TextField
-                    fullWidth
-                    label="Employee Count" 
-                    variant="outlined"                          
-                    id='emp_Count'
-                    name='Emp_Count'
-                    type="number"
-                    value={formData.Emp_Count}
-                    onChange={handleChange}
-                    InputProps={{
-                        startAdornment: <InputAdornment position="start">Employees:</InputAdornment>,
-                    }}
-                />
+                        fullWidth
+                        label="Employee Count" 
+                        variant="outlined"                          
+                        id='emp_Count'
+                        name='Emp_Count'
+                        type="number"
+                        value={formData.Emp_Count}
+                        onChange={handleChange}
+                        InputProps={{
+                            startAdornment: <InputAdornment position="start">Employees:</InputAdornment>,
+                        }}
+                        helperText="Enter the number of employees (must be at least 1)."
+                    />
                 </Box>
+
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>
                     <Button variant="outlined" onClick={onClose}>Cancel</Button>
@@ -147,6 +166,5 @@ function CreateDepartment({ onClose }) {
         </Modal>
     );
 }
-
 
 export default CreateDepartment;

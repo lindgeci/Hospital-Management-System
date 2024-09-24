@@ -5,6 +5,7 @@ const Visit = require('../models/Visits');
 const Patient = require('../models/Patient');
 const Doctor = require('../models/Doctor');  // Import Doctor model
 const Nurse = require('../models/Nurse');    // Import Nurse model
+const { Sequelize } = require('sequelize');
 
 // Utility function to validate email format
 const validateEmail = (email) => {
@@ -74,10 +75,10 @@ const FindDoctors = async (req, res) => {
 };
 const AddStaff = async (req, res) => {
     try {
-        const { Emp_Fname, Emp_Lname, Joining_Date, Emp_type, Email, Address, Dept_ID, SSN, DOB, Date_Separation, Qualifications, Specialization, Patient_ID } = req.body;
+        const { Emp_Fname, Emp_Lname, Joining_Date, Emp_type, Email, Address, Dept_ID, DOB, Qualifications, Specialization, Patient_ID } = req.body;
 
         // Validate input fields
-        if (!Emp_Fname || !Emp_Lname || !Joining_Date || !Emp_type || !Email || !Address || !Dept_ID || !SSN || !DOB ||!Qualifications ||!Specialization) {
+        if (!Emp_Fname || !Emp_Lname || !Joining_Date || !Emp_type || !Email || !Address || !Dept_ID || !DOB || !Qualifications || !Specialization) {
             return res.status(400).json({ error: 'All fields are required' });
         }
 
@@ -86,16 +87,28 @@ const AddStaff = async (req, res) => {
             return res.status(400).json({ error: 'Invalid email format' });
         }
 
-        // Check if the staff member already exists by checking the SSN
-        const existingStaff = await Staff.findOne({ where: { SSN } });
+        // Check if a staff member with the same Email, First Name, and Last Name already exists
+        const existingStaff = await Staff.findOne({ 
+            where: { 
+                Email,
+                Emp_Fname,
+                Emp_Lname 
+            }
+        });
+        
         if (existingStaff) {
-            return res.status(400).json({ error: 'Staff member with the same SSN already exists' });
+            return res.status(400).json({ error: 'Staff member with the same Email, First Name, and Last Name already exists' });
         }
 
         // Check if the department exists
         const department = await Department.findOne({ where: { Dept_ID } });
         if (!department) {
             return res.status(400).json({ error: 'Department not found' });
+        }
+
+        const existingEmail = await Staff.findOne({ where: { Email } });
+        if (existingEmail) {
+            return res.status(400).json({ error: 'Staff member with the same Email already exists' });
         }
 
         // Create the staff member in the 'staff' table
@@ -107,9 +120,7 @@ const AddStaff = async (req, res) => {
             Email,
             Address,
             Dept_ID,
-            SSN,
             DOB,
-            Date_Separation,
             Qualifications,
             Specialization
         });
@@ -127,18 +138,6 @@ const AddStaff = async (req, res) => {
             });
         }
 
-        // Handle Nurse type
-        if (Emp_type === 'Nurse') {
-            if (!Patient_ID) {
-                return res.status(400).json({ error: 'Patient_ID is required for nurses' });
-            }
-
-            await Nurse.create({
-                Emp_ID: newStaff.Emp_ID, // Use the Emp_ID as foreign key
-                Patient_ID // Include the Patient_ID for nurses
-            });
-        }
-
         res.json({ success: true, message: 'Staff added successfully', data: newStaff });
     } catch (error) {
         console.error('Error adding staff:', error);
@@ -146,12 +145,13 @@ const AddStaff = async (req, res) => {
     }
 };
 
+
 const UpdateStaff = async (req, res) => {
     try {
-        const { Emp_Fname, Emp_Lname, Joining_Date, Emp_type, Email, Address, Dept_ID, SSN, DOB, Date_Separation, Qualifications, Specialization, Patient_ID } = req.body;
+        const { Emp_Fname, Emp_Lname, Joining_Date, Emp_type, Email, Address, Dept_ID, DOB, Qualifications, Specialization, Patient_ID } = req.body;
 
         // Validate input fields
-        if (!Emp_Fname || !Emp_Lname || !Joining_Date || !Emp_type || !Email || !Address || !Dept_ID || !SSN || !DOB || !Date_Separation ||!Qualifications ||!Specialization) {
+        if (!Emp_Fname || !Emp_Lname || !Joining_Date || !Emp_type || !Email || !Address || !Dept_ID || !DOB || !Qualifications || !Specialization) {
             return res.status(400).json({ error: 'All fields are required' });
         }
 
@@ -160,15 +160,40 @@ const UpdateStaff = async (req, res) => {
             return res.status(400).json({ error: 'Invalid email format' });
         }
 
+        // Check if a staff member with the same Email, First Name, and Last Name already exists (excluding the current staff member)
+        const existingStaff = await Staff.findOne({
+            where: {
+                Email,
+                Emp_Fname,
+                Emp_Lname,
+                Emp_ID: { [Sequelize.Op.ne]: req.params.id } // Use Sequelize.Op.ne to exclude the current staff member
+            }
+        });
+
+        if (existingStaff) {
+            return res.status(400).json({ error: 'Staff member with the same Email, First Name, and Last Name already exists' });
+        }
+
+        // Check if a staff member with the same Email exists (excluding the current staff member)
+        const existingEmail = await Staff.findOne({
+            where: {
+                Email,
+                Emp_ID: { [Sequelize.Op.ne]: req.params.id } // Use Sequelize.Op.ne to exclude the current staff member
+            }
+        });
+
+        if (existingEmail) {
+            return res.status(400).json({ error: 'Staff member with the same Email already exists' });
+        }
+
         // Update the staff member in the 'staff' table
         const [updated] = await Staff.update(
-            { Emp_Fname, Emp_Lname, Joining_Date, Emp_type, Email, Address, Dept_ID, SSN, DOB, Date_Separation, Qualifications, Specialization},
+            { Emp_Fname, Emp_Lname, Joining_Date, Emp_type, Email, Address, Dept_ID, DOB, Qualifications, Specialization },
             { where: { Emp_ID: req.params.id } }
         );
 
         if (updated === 0) {
-            res.status(404).json({ error: 'Staff not found or not updated' });
-            return;
+            return res.status(404).json({ error: 'Staff not found or not updated' });
         }
 
         // Handle Doctor type updates
@@ -176,16 +201,6 @@ const UpdateStaff = async (req, res) => {
             if (Qualifications || Specialization) {
                 await Doctor.update(
                     { Qualifications, Specialization },
-                    { where: { Emp_ID: req.params.id } }
-                );
-            }
-        }
-
-        // Handle Nurse type updates
-        if (Emp_type === 'Nurse') {
-            if (Patient_ID !== undefined) {
-                await Nurse.update(
-                    { Patient_ID },
                     { where: { Emp_ID: req.params.id } }
                 );
             }

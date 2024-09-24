@@ -54,11 +54,25 @@ function UpdateDepartment({ id, onClose }) {
             return;
         }
 
-        if (!formData.Emp_Count || formData.Emp_Count < 1) {
-            showAlert("Employee count must be at least 1.");
+        if (!formData.Emp_Count || formData.Emp_Count < 7) {
+            showAlert("Employee count must be at least 7.");
+            return;
+        }   
+
+        // Check if comments contain any numbers
+        if (/\d/.test(formData.Dept_head)) {
+            showAlert('Department Head cannot contain numbers');
             return;
         }
 
+        if (/\d/.test(formData.Dept_name)) {
+            showAlert('Department Name cannot contain numbers');
+            return;
+        }
+        if (formData.Emp_Count > 12) {
+            showAlert('Employee count cannot be more than 12');
+            return;
+        }
         // Check if any data has been changed
         if (
             formData.Dept_head === originalData.Dept_head &&
@@ -95,27 +109,34 @@ function UpdateDepartment({ id, onClose }) {
             <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
                 <Typography variant="h6" component="h1" gutterBottom>Update Department</Typography>
+
                 <TextField
                     margin="normal"
                     fullWidth
-                    label="Department head"
+                    label="Department Head"
                     variant="outlined"
                     id="Dept_head"
                     name="Dept_head"
                     value={formData.Dept_head}
                     onChange={handleChange}
+                    disabled
+                    helperText="Enter the name of the department head (at least 2 characters)."
                 />
+                
                 <TextField
                     margin="normal"
                     fullWidth
-                    label="Department name"
+                    label="Department Name"
                     variant="outlined"
                     id="Dept_name"
                     name="Dept_name"
                     type="text"
                     value={formData.Dept_name}
                     onChange={handleChange}
+                    disabled
+                    helperText="Enter the department name (cannot contain numbers)."
                 />
+                
                 <TextField
                     margin="normal"
                     fullWidth
@@ -129,7 +150,9 @@ function UpdateDepartment({ id, onClose }) {
                     InputProps={{
                         startAdornment: <InputAdornment position="start">Employees:</InputAdornment>
                     }}
+                    helperText="Enter the number of employees (must be at least 1)."
                 />
+
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button type="submit" variant="contained" color="primary" onClick={handleUpdateDepartment} sx={{ mr: 1 }}>Submit</Button>
                     <Button variant="outlined" onClick={onClose}>Cancel</Button>

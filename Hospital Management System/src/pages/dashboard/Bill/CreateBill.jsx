@@ -146,7 +146,7 @@ function CreateBill({ onClose }) {
                 />
 
                 {/* Date Issued */}
-                <TextField
+                {/* <TextField
                     fullWidth
                     margin="normal"
                     label="Date Issued"
@@ -159,7 +159,7 @@ function CreateBill({ onClose }) {
                     InputLabelProps={{ shrink: true }}
                     disabled
                     helperText="The date the bill was issued"
-                />
+                /> */}
 
                 {/* Description with Payment Type Dropdown */}
                 <FormControl fullWidth variant="outlined" margin="normal">

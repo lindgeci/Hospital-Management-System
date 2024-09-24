@@ -96,34 +96,34 @@ function Doctor({
         { field: 'Qualifications', headerName: 'Qualifications', flex: 1 },
         { field: 'Emp_Name', headerName: 'Doctor Name', flex: 1 },
         { field: 'Specialization', headerName: 'Specialization', flex: 1 },
-        {
-            field: 'update',
-            headerName: 'Update',
-            flex: 1,
-            renderCell: (params) => (
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleUpdateButtonClick(params.row.Doctor_ID)}
-                    startIcon={<Edit />}
-                >
-                </Button>
-            )
-        },
-        {
-            field: 'delete',
-            headerName: 'Delete',
-            flex: 1,
-            renderCell: (params) => (
-                <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={() => handleDelete(params.row.Doctor_ID)}
-                    startIcon={<Delete />}
-                >
-                </Button>
-            )
-        }
+        // {
+        //     field: 'update',
+        //     headerName: 'Update',
+        //     flex: 1,
+        //     renderCell: (params) => (
+        //         <Button
+        //             variant="contained"
+        //             color="primary"
+        //             onClick={() => handleUpdateButtonClick(params.row.Doctor_ID)}
+        //             startIcon={<Edit />}
+        //         >
+        //         </Button>
+        //     )
+        // },
+        // {
+        //     field: 'delete',
+        //     headerName: 'Delete',
+        //     flex: 1,
+        //     renderCell: (params) => (
+        //         <Button
+        //             variant="contained"
+        //             color="secondary"
+        //             onClick={() => handleDelete(params.row.Doctor_ID)}
+        //             startIcon={<Delete />}
+        //         >
+        //         </Button>
+        //     )
+        // }
     ];
 
     return (
@@ -154,7 +154,7 @@ function Doctor({
                 <Typography variant="h6" style={{ marginRight: 'auto' }}>
                     Doctors
                 </Typography>
-                {!showCreateForm && (
+                {/* {!showCreateForm && (
                     <Button
                         variant="contained"
                         color="primary"
@@ -163,7 +163,7 @@ function Doctor({
                     >
                         Add Doctor
                     </Button>
-                )}
+                )} */}
             </Box>
 
             <Suspense fallback={<div>Loading...</div>}>

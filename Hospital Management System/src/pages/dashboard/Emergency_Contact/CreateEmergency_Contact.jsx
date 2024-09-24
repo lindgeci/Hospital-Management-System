@@ -121,8 +121,18 @@ function CreateEmergencyContact({ onClose }) {
             showAlert('Please enter a valid phone number (e.g., 044111222).');
             return;
         }
+        if (!/^\d+$/.test(Phone)) {
+            showAlert('Phone number can only contain digits.');
+            return;
+        }
         if (Patient_ID < 1) {
             showAlert('Patient ID should be at least 1');
+            return;
+        }
+        const validateName = (name) => /^[A-Za-z]+$/.test(name);
+        
+        if (!validateName(Contact_Name)) {
+            showAlert('Contact Name can only contain numbers');
             return;
         }
 
@@ -155,7 +165,7 @@ function CreateEmergencyContact({ onClose }) {
             <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
                 <Typography variant="h6" component="h1" gutterBottom>Add Emergency Contact</Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+               
     <TextField
         fullWidth
         label="Contact Name"
@@ -224,7 +234,7 @@ function CreateEmergencyContact({ onClose }) {
         readOnly
         helperText="This is the phone number of the selected patient"
     />
-</Box>
+
 
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>

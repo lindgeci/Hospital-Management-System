@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Box, TextField, Button, Typography, Select, MenuItem, InputLabel, FormControl, Modal } from '@mui/material';
+import { Box, TextField, Button, Typography, Select, FormHelperText, MenuItem, InputLabel, FormControl, Modal } from '@mui/material';
 import ErrorModal from '../../../components/ErrorModal';
 import Cookies from 'js-cookie';
 
@@ -9,14 +9,12 @@ function CreateStaff({ onClose }) {
     const [formData, setFormData] = useState({
         Emp_Fname: '',
         Emp_Lname: '',
-        Joining_Date: '',
+        Joining_Date: new Date().toISOString().split('T')[0],
         Emp_type: 'Doctor',
         Email: '',
         Address: '',
         Dept_ID: '',
-        SSN: '',
         DOB: '',
-        Date_Separation: '',
         Qualifications: '',
         Specialization: ''
     });
@@ -43,6 +41,7 @@ function CreateStaff({ onClose }) {
             console.error('Error fetching departments:', error);
         }
     };
+
     useEffect(() => {
         fetchStaff();
     }, []);
@@ -68,7 +67,6 @@ function CreateStaff({ onClose }) {
         }));
     };
 
-
     const handleAddStaff = async () => {
         try {
             await axios.post("http://localhost:9004/api/staff/create", formData, {
@@ -77,7 +75,7 @@ function CreateStaff({ onClose }) {
                 }
             });
             navigate('/dashboard/staffs');
-            window.location.reload(); // Refresh after successful addition
+            window.location.reload();
         } catch (error) {
             console.error('Error adding Staff:', error);
             showAlert(error.response.data.error);
@@ -93,54 +91,73 @@ function CreateStaff({ onClose }) {
         const {
             Emp_Fname,
             Emp_Lname,
-            Joining_Date,
             Emp_type,
             Email,
             Address,
             Dept_ID,
-            SSN,
             DOB,
-            Date_Separation,
             Qualifications,
             Specialization
         } = formData;
 
-        if (!Emp_Fname || !Emp_Lname || !Joining_Date || !Emp_type || !Email || !Address || !Dept_ID || !SSN || !DOB || !Date_Separation || !Qualifications|| !Specialization) {
+        if (!Emp_Fname || !Emp_Lname || !Emp_type || !Email || !Address || !Dept_ID || !DOB || !Qualifications || !Specialization) {
             showAlert('All fields are required!');
             return;
         }
 
-        function validateEmail(Email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(String(Email).toLowerCase());
-        }
+        const validateEmail = (email) => {
+            const re = /^[^\s@]+@[^\s@]+\.(com|ubt-uni\.net)$/;
+            return re.test(String(email).toLowerCase());
+        };
 
         if (!validateEmail(Email)) {
-            showAlert('Invalid email format');
+            showAlert('Email must end with @ubt-uni.net or .com');
             return;
         }
 
-        // const existingStaff = staff.find(staff => staff.SSN === SSN);
-        // if (existingStaff) {
-        //     showAlert('Staff member with the same SSN already exists.');
-        //     return;
-        // }
+        const validateName = (name) => /^[A-Za-z]+$/.test(name);
+        
+        if (!validateName(Emp_Fname)) {
+            showAlert('First Name can only contain letters');
+            return;
+        }
 
-        const existingStaff1 = staff.find(staff => staff.Email === Email);
-        if (existingStaff1) {
+        if (!validateName(Emp_Lname)) {
+            showAlert('Last Name can only contain letters');
+            return;
+        }
+
+        if (!validateName(Address)) {
+            showAlert('Address can only contain letters');
+            return;
+        }
+
+        const existingStaff = staff.find(staff => 
+            staff.Emp_Fname === formData.Emp_Fname && 
+            staff.Emp_Lname === formData.Emp_Lname && 
+            staff.Email === formData.Email
+        );
+
+        if (existingStaff) {
+            showAlert('Staff member with the same first name, last name, and email already exists.');
+            return;
+        }
+
+        const existingStaffByEmail = staff.find(staff => staff.Email === Email);
+        if (existingStaffByEmail) {
             showAlert('Staff member with the same Email already exists.');
             return;
         }
 
         handleAddStaff();
     };
-    
 
     return (
         <Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
             <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
                 <Typography variant="h6" component="h1" gutterBottom>Add Staff</Typography>
+                
                 <TextField
                     fullWidth
                     margin="normal"
@@ -151,7 +168,9 @@ function CreateStaff({ onClose }) {
                     placeholder="Enter First Name"
                     value={formData.Emp_Fname}
                     onChange={handleChange}
+                    helperText="Only letters are allowed."
                 />
+                
                 <TextField
                     fullWidth
                     margin="normal"
@@ -162,34 +181,16 @@ function CreateStaff({ onClose }) {
                     placeholder="Enter Last Name"
                     value={formData.Emp_Lname}
                     onChange={handleChange}
+                    helperText="Only letters are allowed."
                 />
-                <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Joining Date"
-                    variant="outlined"
-                    type="date"
+                
+                <input
+                    type="hidden"
                     id="Joining_Date"
                     name="Joining_Date"
                     value={formData.Joining_Date}
-                    onChange={handleChange}
-                    InputLabelProps={{ shrink: true }}
                 />
-                {/* <FormControl fullWidth margin="normal" variant="outlined">
-                    <InputLabel id="emp-type-select-label">Employee Type</InputLabel>
-                    <Select
-                        labelId="emp-type-select-label"
-                        id="Emp_type"
-                        name="Emp_type"
-                        value={formData.Emp_type}
-                        onChange={handleChange}
-                        label="Employee Type"
-                    >
-                        <MenuItem value=""><em>Select Employee Type</em></MenuItem>
-                        <MenuItem value="Doctor">Doctor</MenuItem>
-                        <MenuItem value="Nurse">Nurse</MenuItem>
-                    </Select>
-                </FormControl> */}
+                
                 <TextField
                     fullWidth
                     margin="normal"
@@ -200,48 +201,42 @@ function CreateStaff({ onClose }) {
                     placeholder="Enter Email"
                     value={formData.Email}
                     onChange={handleChange}
+                    helperText="Must end with @ubt-uni.net or .com."
                 />
+                
                 <TextField
                     fullWidth
                     margin="normal"
                     label="Address"
                     variant="outlined"
                     id="Address"
-                    name="Address"
+                    name="Address" 
                     placeholder="Enter Address"
                     value={formData.Address}
                     onChange={handleChange}
+                    helperText="Only letters are allowed."
                 />
+                
                 <FormControl fullWidth variant="outlined" margin="normal">
-                        <InputLabel id="department-select-label">Department</InputLabel>
-                        <Select
-                            labelId="patient-department-select-label-label"
-                            id="visitDepartmentID"
-                            name="Dept_ID"
-                            value={formData.Dept_ID}
-                            onChange={handleChange}
-                            label="Department"
-                        >
-                            <MenuItem value=""><em>Select Department</em></MenuItem>
-                            {department.map(departmenttype => (
-                                <MenuItem key={departmenttype.Dept_ID} value={departmenttype.Dept_ID}>
-                                    {`${departmenttype.Dept_name}`}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                <TextField
-                    fullWidth
-                    margin="normal"
-                    label="SSN"
-                    variant="outlined"
-                    id="SSN"
-                    name="SSN"
-                    placeholder="Enter SSN"
-                    value={formData.SSN}
-                    onChange={handleChange}
-                    type="number"
-                />
+                    <InputLabel id="department-select-label">Department</InputLabel>
+                    <Select
+                        labelId="department-select-label"
+                        id="visitDepartmentID"
+                        name="Dept_ID"
+                        value={formData.Dept_ID}
+                        onChange={handleChange}
+                        label="Department"
+                    >
+                        <MenuItem value=""><em>Select Department</em></MenuItem>
+                        {department.map(departmenttype => (
+                            <MenuItem key={departmenttype.Dept_ID} value={departmenttype.Dept_ID}>
+                                {`${departmenttype.Dept_name}`}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                    <FormHelperText>Please select a department.</FormHelperText>
+                </FormControl>
+                
                 <TextField
                     fullWidth
                     margin="normal"
@@ -253,43 +248,47 @@ function CreateStaff({ onClose }) {
                     value={formData.DOB}
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
+                    helperText="Select your date of birth."
                 />
-                <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Date of Separation"
-                    variant="outlined"
-                    type="date"
-                    id="Date_Separation"
-                    name="Date_Separation"
-                    value={formData.Date_Separation}
-                    onChange={handleChange}
-                    InputLabelProps={{ shrink: true }}
-                />
-                <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Qualifications"
-                    variant="outlined"
-                    type="text"
-                    id="Qualifications"
-                    name="Qualifications"
-                    value={formData.Qualifications}
-                    onChange={handleChange}
-                    InputLabelProps={{ shrink: true }}
-                />
-                <TextField
-                    fullWidth
-                    margin="normal"
-                    label="Specialization"
-                    variant="outlined"
-                    type="text"
-                    id="Specialization"
-                    name="Specialization"
-                    value={formData.Specialization}
-                    onChange={handleChange}
-                    InputLabelProps={{ shrink: true }}
-                />
+                
+                <FormControl fullWidth margin="normal">
+                    <InputLabel id="qualifications-label">Qualifications</InputLabel>
+                    <Select
+                        labelId="qualifications-label"
+                        id="Qualifications"
+                        name="Qualifications"
+                        value={formData.Qualifications}
+                        onChange={handleChange}
+                        label="Qualifications"
+                    >
+                        <MenuItem value=""><em>Select Qualifications</em></MenuItem>
+                        <MenuItem value="Bachelor's Degree">Bachelor's Degree</MenuItem>
+                        <MenuItem value="Master's Degree">Master's Degree</MenuItem>
+                        <MenuItem value="PhD">PhD</MenuItem>
+                        <MenuItem value="Diploma">Diploma</MenuItem>
+                    </Select>
+                    <FormHelperText>Select your qualifications.</FormHelperText>
+                </FormControl>
+
+                <FormControl fullWidth margin="normal">
+                    <InputLabel id="specialization-label">Specialization</InputLabel>
+                    <Select
+                        labelId="specialization-label"
+                        id="Specialization"
+                        name="Specialization"
+                        value={formData.Specialization}
+                        onChange={handleChange}
+                        label="Specialization"
+                    >
+                        <MenuItem value=""><em>Select Specialization</em></MenuItem>
+                        <MenuItem value="Cardiology">Emergency medicine</MenuItem>
+                        <MenuItem value="Dermatology">Diagnostic radiology</MenuItem>
+                        <MenuItem value="Neurology">Medical genetics</MenuItem>
+                        <MenuItem value="Pediatrics">Internal medicine</MenuItem>
+                    </Select>
+                    <FormHelperText>Select your specialization.</FormHelperText>
+                </FormControl>
+
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>
                     <Button variant="outlined" onClick={onClose}>Cancel</Button>

@@ -1,5 +1,5 @@
 const Patient = require('../models/Patient');
-
+const { Op } = require('sequelize');
 const FindAllPatients = async (req, res) => {
     try {
         const patients = await Patient.findAll();
@@ -47,6 +47,22 @@ const AddPatient = async (req, res) => {
             return res.status(400).json({ error: 'Invalid input data.' });
         }
 
+        // Check if email, phone, or personal number are already in use
+        const existingPatient = await Patient.findOne({
+            where: {
+                [Op.or]: [
+                    { Email: Email },
+                    { Phone: Phone },
+                    { Personal_Number: Personal_Number }
+                ]
+            }
+        });
+
+        if (existingPatient) {
+            return res.status(400).json({ error: 'Email, phone number, or personal number already exists.' });
+        }
+
+        // Create new patient
         const newPatient = await Patient.create({
             Personal_Number,
             Patient_Fname,
@@ -57,30 +73,50 @@ const AddPatient = async (req, res) => {
             Gender,
             Phone
         });
+
         res.json({ success: true, message: 'Patient added successfully', data: newPatient });
     } catch (error) {
         console.error('Error adding patient:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
 const UpdatePatient = async (req, res) => {
     try {
         const { Personal_Number, Patient_Fname, Patient_Lname, Birth_Date, Blood_type, Email, Gender, Phone } = req.body;
+
+        // Check if the updated email, phone, or personal number already exists for another patient
+        const existingPatient = await Patient.findOne({
+            where: {
+                [Op.or]: [
+                    { Email: Email },
+                    { Phone: Phone },
+                    { Personal_Number: Personal_Number }
+                ],
+                Patient_ID: { [Op.ne]: req.params.id } // Exclude the current patient from the check
+            }
+        });
+
+        if (existingPatient) {
+            return res.status(400).json({ error: 'Email, phone number, or personal number already exists for another patient.' });
+        }
+
+        // Update patient details
         const updated = await Patient.update(
             { Personal_Number, Patient_Fname, Patient_Lname, Birth_Date, Blood_type, Email, Gender, Phone },
             { where: { Patient_ID: req.params.id } }
         );
+
         if (updated[0] === 0) {
-            res.status(404).json({ error: 'Patient not found or not updated' });
-            return;
+            return res.status(404).json({ error: 'Patient not found or not updated' });
         }
+
         res.json({ success: true, message: 'Patient updated successfully' });
     } catch (error) {
         console.error('Error updating patient:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 const DeletePatient = async (req, res) => {
     try {

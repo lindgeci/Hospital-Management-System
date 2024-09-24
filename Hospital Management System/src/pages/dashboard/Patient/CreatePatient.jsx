@@ -1,7 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Box, TextField, Button, Typography, Select, MenuItem, InputLabel, FormControl, Modal } from '@mui/material';
+import { Box, TextField, Button, Typography, FormHelperText, Select, MenuItem, InputLabel, FormControl, Modal } from '@mui/material';
 import Cookies from 'js-cookie';
 
 // Lazy load the ErrorModal component
@@ -68,41 +68,61 @@ function CreatePatient({ onClose }) {
 
     const handleValidation = () => {
         const { Personal_Number, Patient_Fname, Patient_Lname, Birth_Date, Blood_type, Email, Gender, Phone } = formData;
-        const personalNumberRegex = /^\d{10}$/;
-        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-        const phoneRegex = /^(?:\+\d{1,2}\s?)?(?:\d{3})(?:\d{6})$/;
-        const bloodTypeRegex = /^(A|B|AB|O)[+-]$/;
-
+        
+        const personalNumberStr = String(Personal_Number);
         if (Personal_Number === '' || Patient_Fname === '' || Patient_Lname === '' || Birth_Date === '' || Blood_type === '' || Email === '' || Gender === '' || Phone === '') {
             showAlert('All fields are required.');
             return;
         }
+        const validateEmail = (email) => {
+            const re = /^[^\s@]+@[^\s@]+\.(com|ubt-uni\.net)$/;
+            return re.test(String(email).toLowerCase());
+        };
 
-        if (!Personal_Number.match(personalNumberRegex)) {
-            showAlert('Please enter a valid personal number');
+        if (!validateEmail(Email)) {
+            showAlert('Email must end with @ubt-uni.net or .com');
+            return;
+        }
+        const validateName = (name) => /^[A-Za-z]+$/.test(name);
+        
+        if (!validateName(Patient_Fname)) {
+            showAlert('First Name can only contain letters');
             return;
         }
 
-        if (!Blood_type.match(bloodTypeRegex)) {
-            showAlert('Please enter a valid blood type (e.g., A+, B-, AB+, O-).');
+        if (!validateName(Patient_Lname)) {
+            showAlert('Last Name can only contain letters');
             return;
         }
 
-        if (!Email.match(emailRegex)) {
-            showAlert('Please enter a valid email address.');
+    
+        const existingStaffByPersonal_Number = patients.find(patient => String(patient.Personal_Number) === personalNumberStr);
+        if (existingStaffByPersonal_Number) {
+            showAlert('Patient member with the same Personal Number already exists.');
+            return;
+        }
+    
+        const existingStaffByPhone = patients.find(patients => patients.Phone === Phone);
+        if (existingStaffByPhone) {
+            showAlert('Patient member with the same Phone already exists.');
             return;
         }
 
-        if (!Phone.match(phoneRegex)) {
-            showAlert('Please enter a valid phone number (like: 044111222)');
+        const existingStaffByEmail = patients.find(patients => patients.Email === Email);
+        if (existingStaffByEmail) {
+            showAlert('Patient member with the same Email already exists.');
             return;
         }
+        const existingStaff = patients.find(patients => 
+            patients.Personal_Number === formData.Personal_Number && 
+            patients.Phone === formData.Phone && 
+            patients.Email === formData.Email
+        );
 
-        // const existingPatient = patients.find(patient => patient.Patient_Fname === Patient_Fname);
-        // if (existingPatient) {
-        //     showAlert('Patient with the same name already exists');
-        //     return;
-        // }
+        if (existingStaff) {
+            showAlert('Patient member with the same personal number, phone number, and email already exists.');
+            return;
+        }
 
         handleAddPatient();
     };
@@ -130,6 +150,7 @@ function CreatePatient({ onClose }) {
                     placeholder="Enter Personal Number"
                     value={formData.Personal_Number}
                     onChange={handleChange}
+                    helperText="Enter a unique personal number."
                 />
                 <TextField
                     fullWidth
@@ -141,6 +162,7 @@ function CreatePatient({ onClose }) {
                     placeholder="Enter Firstname"
                     value={formData.Patient_Fname}
                     onChange={handleChange}
+                    helperText="Only letters are allowed."
                 />
                 <TextField
                     fullWidth
@@ -152,6 +174,7 @@ function CreatePatient({ onClose }) {
                     placeholder="Enter Lastname"
                     value={formData.Patient_Lname}
                     onChange={handleChange}
+                    helperText="Only letters are allowed."
                 />
                 <TextField
                     fullWidth
@@ -164,6 +187,7 @@ function CreatePatient({ onClose }) {
                     value={formData.Birth_Date}
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
+                     helperText="Enter your birth date."
                 />
                 <FormControl fullWidth variant="outlined" margin="normal">
                     <InputLabel id="gender-select-label">Gender</InputLabel>
@@ -181,6 +205,7 @@ function CreatePatient({ onClose }) {
                         <MenuItem value="Other">Other</MenuItem>
                         <MenuItem value="Prefer not to say">Prefer not to say</MenuItem>
                     </Select>
+                    <FormHelperText>Please select your Gender.</FormHelperText>
                 </FormControl>
                 <FormControl fullWidth variant="outlined" margin="normal">
                     <InputLabel id="blood-type-select-label">Blood Type</InputLabel>
@@ -202,6 +227,7 @@ function CreatePatient({ onClose }) {
                         <MenuItem value="O+">O+</MenuItem>
                         <MenuItem value="O-">O-</MenuItem>
                     </Select>
+                    <FormHelperText>Please select a Blood Type.</FormHelperText>
                 </FormControl>
                 <TextField
                     fullWidth
@@ -213,6 +239,7 @@ function CreatePatient({ onClose }) {
                     placeholder="Enter email"
                     value={formData.Email}
                     onChange={handleChange}
+                     helperText="Must end with @ubt-uni.net or .com."
                 />
                 <TextField
                     fullWidth
@@ -221,9 +248,11 @@ function CreatePatient({ onClose }) {
                     variant="outlined"
                     id="Phone"
                     name="Phone"
+                    type="number"
                     placeholder="Enter Phone"
                     value={formData.Phone}
                     onChange={handleChange}
+                    helperText="Enter a valid phone number."
                 />
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>

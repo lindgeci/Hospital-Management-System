@@ -85,71 +85,75 @@ function UpdatePatient({ id, onClose }) {
 
     const handleUpdatePatient = async () => {
         try {
-            const personalNumberRegex = /^\d{10}$/;
-            const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-            const phoneRegex = /^(?:\+\d{1,2}\s?)?(?:\d{3})(?:\d{6})$/;
-            const bloodTypeRegex = /^(A|B|AB|O)[+-]$/;
-
             const { Personal_Number, Patient_Fname, Patient_Lname, Birth_Date, Blood_type, Email, Gender, Phone } = formData;
-
+    
+            const personalNumberStr = String(Personal_Number); // Convert Personal_Number to string for comparison
+    
             if (!Patient_Fname.trim() || !Patient_Lname.trim() || !Blood_type.trim() || !Email.trim() || !Gender.trim() || !Phone.trim()) {
                 showAlert('All fields are required.');
                 return;
             }
-            if (
-                Personal_Number === originalData.Personal_Number &&
-                Patient_Fname === originalData.Patient_Fname &&
-                Patient_Lname === originalData.Patient_Lname &&
-                Birth_Date === originalData.Birth_Date &&
-                Blood_type === originalData.Blood_type &&
-                Email === originalData.Email &&
-                Gender === originalData.Gender &&
-                Phone === originalData.Phone
-            ) {
-                showAlert("Data must be changed before updating.");
+    
+            const validateEmail = (email) => {
+                const re = /^[^\s@]+@[^\s@]+\.(com|ubt-uni\.net)$/;
+                return re.test(String(email).toLowerCase());
+            };
+    
+            if (!validateEmail(Email)) {
+                showAlert('Email must end with @ubt-uni.net or .com');
                 return;
             }
-
-            if (!String(Personal_Number).match(personalNumberRegex)) {
-                showAlert('Please enter a valid personal number');
+            
+    
+            const validateName = (name) => /^[A-Za-z]+$/.test(name);
+    
+            if (!validateName(Patient_Fname)) {
+                showAlert('First Name can only contain letters');
                 return;
             }
-
-            if (!Blood_type.match(bloodTypeRegex)) {
-                showAlert('Please enter a valid blood type (e.g., A+, B-, AB+, O-).');
+    
+            if (!validateName(Patient_Lname)) {
+                showAlert('Last Name can only contain letters');
                 return;
             }
-
-            if (!Email.match(emailRegex)) {
-                showAlert('Please enter a valid email address.');
+    
+            // Check for an existing patient with the same Personal Number, excluding the current patient by ID
+            const existingPatientWithPersonalNumber = patients.find(patient => String(patient.Personal_Number) === personalNumberStr && patient.Patient_ID !== id);
+            if (existingPatientWithPersonalNumber) {
+                showAlert('Patient with the same Personal Number already exists.');
                 return;
             }
-
-            if (!Phone.match(phoneRegex)) {
-                showAlert('Please enter a valid phone number (like: 044111222).');
+    
+            // Check for an existing patient with the same Email, excluding the current patient by ID
+            const existingPatientWithEmail = patients.find(patient => patient.Email === Email && patient.Patient_ID !== id);
+            if (existingPatientWithEmail) {
+                showAlert('Patient with the same Email already exists.');
                 return;
             }
-
-            // Check if patient with the same personal number already exists
-            const existingPatient = patients.find(pat => pat.Personal_Number === Personal_Number && pat.Patient_ID !== id);
-            if (existingPatient) {
-                showAlert('Patient with the same personal number already exists.');
+    
+            // Check for an existing patient with the same Phone, excluding the current patient by ID
+            const existingPatientWithPhone = patients.find(patient => patient.Phone === Phone && patient.Patient_ID !== id);
+            if (existingPatientWithPhone) {
+                showAlert('Patient with the same Phone number already exists.');
                 return;
             }
-
+    
+            // Proceed with the update if no validation issues are found
             await axios.put(`http://localhost:9004/api/patient/update/${id}`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-
+    
             navigate('/dashboard/patient');
             window.location.reload();
+    
         } catch (error) {
             console.error('Error updating patient:', error);
             showAlert('An error occurred while updating the patient. Please try again later.');
         }
     };
+    
 
     return (
         <Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
@@ -169,6 +173,7 @@ function UpdatePatient({ id, onClose }) {
                     placeholder="Enter Personal Number"
                     value={formData.Personal_Number}
                     onChange={handleChange}
+
                 />
                 <TextField
                     fullWidth
@@ -203,6 +208,7 @@ function UpdatePatient({ id, onClose }) {
                     value={formData.Birth_Date}
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
+                    disabled
                 />
                 <FormControl fullWidth variant="outlined" margin="normal">
                     <InputLabel id="gender-select-label">Gender</InputLabel>
@@ -213,6 +219,7 @@ function UpdatePatient({ id, onClose }) {
                         value={formData.Gender}
                         onChange={handleChange}
                         label="Gender"
+                        disabled
                     >
                         <MenuItem value=""><em>Select Gender</em></MenuItem>
                         <MenuItem value="Male">Male</MenuItem>
@@ -230,6 +237,7 @@ function UpdatePatient({ id, onClose }) {
                         value={formData.Blood_type}
                         onChange={handleChange}
                         label="Blood Type"
+                        disabled
                     >
                         <MenuItem value=""><em>Select Blood Type</em></MenuItem>
                         <MenuItem value="A+">A+</MenuItem>

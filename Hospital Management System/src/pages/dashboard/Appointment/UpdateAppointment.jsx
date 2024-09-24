@@ -259,7 +259,7 @@ function UpdateAppointment({ id, onClose }) {
                     readOnly
                     helperText="Qualifications of the selected doctor"
                 />
-
+{/* 
                 <TextField
                     fullWidth
                     margin="normal"
@@ -273,7 +273,7 @@ function UpdateAppointment({ id, onClose }) {
                     InputLabelProps={{ shrink: true }}
                     disabled
                     helperText="Date of the appointment (disabled)"
-                />
+                /> */}
 
                 <FormControl fullWidth variant="outlined" margin="normal">
                     <InputLabel id="time-select-label">Time</InputLabel>
