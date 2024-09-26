@@ -16,6 +16,7 @@ function UpdateEmergency_Contact({ id, onClose }) {
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [originalData, setOriginalData] = useState({});
     const [patients, setPatients] = useState([]);
+    const [emergency_contact, setEmergency_contact] = useState([]);
     const token = Cookies.get('token');
 
     useEffect(() => {
@@ -55,6 +56,7 @@ function UpdateEmergency_Contact({ id, onClose }) {
                     Relation: data.Relation,
                     Patient_ID: data.Patient_ID,
                 });
+                setEmergency_contact([data]);  // Wrap the data in an array
                 fetchPatientPhone(data.Patient_ID);
             } else {
                 showAlert('No data found for this emergency contact.');
@@ -64,6 +66,7 @@ function UpdateEmergency_Contact({ id, onClose }) {
             showAlert('Error fetching emergency contact details.');
         }
     };
+    
 
     const fetchPatientPhone = async (patientId) => {
         if (!patientId) return;
@@ -132,7 +135,14 @@ function UpdateEmergency_Contact({ id, onClose }) {
             showAlert("Data must be changed before updating.");
             return;
         }
-
+        // const existingContact = emergency_contact.find(contact => 
+        //     contact.Phone === formData.Phone && contact.id !== id // Adjust id to match your data structure
+        // );
+    
+        // if (existingContact) {
+        //     showAlert('This phone number is already associated with another emergency contact.');
+        //     return;
+        // }
         try {
             await axios.put(`http://localhost:9004/api/emergency_contact/update/${id}`, formData, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -140,8 +150,10 @@ function UpdateEmergency_Contact({ id, onClose }) {
             onClose();
             window.location.reload();
         } catch (error) {
-            console.error('Error updating emergency contact:', error);
-            showAlert('Error updating emergency contact.');
+            // Log the error and display the server's message if it exists
+            console.error('Error updating emergency contact:', error.response?.data || error.message);
+            const errorMessage = error.response?.data?.error || 'Error updating emergency contact.';
+            showAlert(errorMessage); // Display the specific error message to the user
         }
     };
 
@@ -151,7 +163,7 @@ function UpdateEmergency_Contact({ id, onClose }) {
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
                 <Typography variant="h6" component="h1" gutterBottom>Update Emergency Contact</Typography>
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     label="Name"
                     variant="outlined"
@@ -165,15 +177,15 @@ function UpdateEmergency_Contact({ id, onClose }) {
                     fullWidth
                     label="Phone"
                     variant="outlined"
-                    margin="normal"
+                    margin="dense"
                     name="Phone"
                     value={formData.Phone}
                     onChange={handleChange}
                     helperText="Enter the phone number for the emergency contact"
-                    disabled
+                    // disabled
                 />
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     select
                     label="Relation"
@@ -193,7 +205,7 @@ function UpdateEmergency_Contact({ id, onClose }) {
                     <MenuItem value='Friend'>Friend</MenuItem>
                 </TextField>
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     select
                     label="Patient"
@@ -212,7 +224,7 @@ function UpdateEmergency_Contact({ id, onClose }) {
                     ))}
                 </TextField>
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     label="Patient Phone"
                     variant="outlined"

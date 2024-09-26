@@ -1,4 +1,5 @@
 const Department = require('../models/Department');
+const { Op } = require('sequelize');
 
     const FindAllDepartments = async (req, res) => {
         try {
@@ -47,7 +48,7 @@ const Department = require('../models/Department');
         // Check if the department already exists
         const existingDepartment = await Department.findOne({ where: { Dept_name } });
         if (existingDepartment) {
-            return res.status(400).json({ error: 'Department with the same name already exists1' });
+            return res.status(400).json({ error: 'Department with the same name already exists' });
         } 
 
             const newDepartment = await Department.create({
@@ -65,38 +66,53 @@ const Department = require('../models/Department');
     const UpdateDepartment = async (req, res) => {
         try {
             const { Dept_head, Dept_name, Emp_Count } = req.body;
-           
+    
             // Validate input fields
-        if (!Dept_head || !Dept_name || !Emp_Count) {
-            return res.status(400).json({ error: 'All fields are required' });
-        }
-        
-        if (Dept_head.length < 2) {
-            return res.status(400).json({ error: 'Department head must be at least 2 characters long' });
-        }
-
-        if (Dept_name.length < 2) {
-            return res.status(400).json({ error: 'Department name must be at least 2 characters long' });
-        }
-
-        if (parseInt(Emp_Count) < 1 || isNaN(parseInt(Emp_Count))) {
-            return res.status(400).json({ error: 'Emplyee Count must be at least 1' });
-        }
-
+            if (!Dept_head || !Dept_name || !Emp_Count) {
+                return res.status(400).json({ error: 'All fields are required' });
+            }
+    
+            if (Dept_head.length < 2) {
+                return res.status(400).json({ error: 'Department head must be at least 2 characters long' });
+            }
+    
+            if (Dept_name.length < 2) {
+                return res.status(400).json({ error: 'Department name must be at least 2 characters long' });
+            }
+    
+            if (parseInt(Emp_Count) < 1 || isNaN(parseInt(Emp_Count))) {
+                return res.status(400).json({ error: 'Employee count must be at least 1' });
+            }
+    
+            // Check if the new department name already exists in another department
+            const existingDepartment = await Department.findOne({
+                where: {
+                    Dept_name,
+                    Dept_ID: { [Op.ne]: req.params.id } // Exclude the current department being updated
+                }
+            });
+    
+            if (existingDepartment) {
+                return res.status(400).json({ error: 'Department with the same name already exists' });
+            }
+    
             const updated = await Department.update(
                 { Dept_head, Dept_name, Emp_Count },
                 { where: { Dept_ID: req.params.id } }
             );
+    
             if (updated[0] === 0) {
                 res.status(404).json({ error: 'Department not found or not updated' });
                 return;
             }
+    
             res.json({ success: true, message: 'Department updated successfully' });
         } catch (error) {
             console.error('Error updating department:', error);
             res.status(500).json({ error: 'Internal Server Error' });
         }
     };
+    
 
     const DeleteDepartment = async (req, res) => {
         try {

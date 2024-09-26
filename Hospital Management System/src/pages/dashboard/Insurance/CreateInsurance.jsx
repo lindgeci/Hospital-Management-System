@@ -170,7 +170,7 @@ function CreateInsurance({ onClose }) {
     <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
         {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
         <Typography variant="h6" component="h1" gutterBottom>Add Insurance</Typography>
-        <FormControl fullWidth margin="normal">
+        <FormControl fullWidth margin="dense">
             <InputLabel id="patient-select-label">Patient</InputLabel>
             <Select
                 labelId="patient-select-label"
@@ -193,7 +193,7 @@ function CreateInsurance({ onClose }) {
             fullWidth
             label="Insurance Code"
             variant="outlined"
-            margin="normal"
+            margin="dense"
             name="Ins_Code"
             value={formData.Ins_Code}
             onChange={handleChange}
@@ -205,7 +205,7 @@ function CreateInsurance({ onClose }) {
             type="date"
             label="End Date"
             variant="outlined"
-            margin="normal"
+            margin="dense"
             name="End_Date"
             value={formData.End_Date}
             onChange={handleChange}
@@ -213,8 +213,8 @@ function CreateInsurance({ onClose }) {
             inputProps={{ min: new Date().toISOString().split("T")[0] }} // Prevent dates before today
             helperText="Select the end date for the insurance"
         />
-       <TextField
-            margin="normal"
+        <TextField
+            margin="dense"
             fullWidth
             select
             label="Provider"
@@ -230,7 +230,7 @@ function CreateInsurance({ onClose }) {
             <MenuItem value='Yes'>Yes</MenuItem>
         </TextField>
         <TextField
-            margin="normal"
+            margin="dense"
             fullWidth
             select
             label="Dental"
@@ -246,14 +246,14 @@ function CreateInsurance({ onClose }) {
             <MenuItem value='Yes'>Yes</MenuItem>
         </TextField>
         <TextField
-                    fullWidth
-                    label="Patient Phone"
-                    variant="outlined"
-                    margin="normal"
-                    value={patientPhone}
-                    readOnly
-                    helperText="This is the phone number of the selected patient"
-                />
+            fullWidth
+            label="Patient Phone"
+            variant="outlined"
+            margin="dense"
+            value={patientPhone}
+            readOnly
+            helperText="This is the phone number of the selected patient"
+        />
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
             <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>
             <Button variant="outlined" onClick={onClose}>Cancel</Button>

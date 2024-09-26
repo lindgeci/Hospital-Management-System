@@ -143,7 +143,7 @@ function CreateRating({ onClose }) {
                 <Typography variant="h6" component="h1" gutterBottom>Add Rating</Typography>
                 
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     select
                     label="Employee"
@@ -163,7 +163,7 @@ function CreateRating({ onClose }) {
                 </TextField>
 
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     label="Staff Email"
                     variant="outlined"
@@ -174,7 +174,7 @@ function CreateRating({ onClose }) {
                 />
                     
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     select
                     label="Rating"
@@ -195,7 +195,7 @@ function CreateRating({ onClose }) {
                     fullWidth
                     label='Comment'
                     variant='outlined'
-                    margin='normal'
+                    margin='dense'
                     name='Comments'
                     value={formData.Comments}
                     onChange={handleChange}
@@ -206,7 +206,7 @@ function CreateRating({ onClose }) {
                     label='Date'
                     type='date'
                     variant='outlined'
-                    margin='normal'
+                    margin='dense'
                     name='Date'
                     value={formData.Date}
                     onChange={handleChange}

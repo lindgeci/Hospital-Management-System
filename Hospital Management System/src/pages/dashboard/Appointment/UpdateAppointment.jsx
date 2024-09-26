@@ -150,7 +150,7 @@ function UpdateAppointment({ id, onClose }) {
             return;
         }
     
-        // Normalize original time to HH:mm format
+        // denseize original time to HH:mm format
         const originalTime = originalData.Time ? originalData.Time.substring(0, 5) : '';
     
         // Check if data has changed
@@ -158,7 +158,7 @@ function UpdateAppointment({ id, onClose }) {
             Patient_ID !== originalData.Patient_ID ||
             Doctor_ID !== originalData.Doctor_ID ||
             Date !== originalData.Date ||
-            Time !== originalTime || // Compare with normalized original time
+            Time !== originalTime || // Compare with denseized original time
             Scheduled_On !== originalData.Scheduled_On;
     
         if (!dataChanged) {
@@ -200,7 +200,7 @@ function UpdateAppointment({ id, onClose }) {
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={closeErrorModal} />}
                 <Typography variant="h6" component="h1" gutterBottom>Update Appointment</Typography>
 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="patient-select-label">Patient</InputLabel>
                     <Select
                         labelId="patient-select-label"
@@ -222,7 +222,7 @@ function UpdateAppointment({ id, onClose }) {
 
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Patient Phone"
                     variant="outlined"
                     value={patientPhone}
@@ -230,7 +230,7 @@ function UpdateAppointment({ id, onClose }) {
                     helperText="Phone number of the selected patient"
                 />
 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="doctor-select-label">Doctor</InputLabel>
                     <Select
                         labelId="doctor-select-label"
@@ -252,7 +252,7 @@ function UpdateAppointment({ id, onClose }) {
 
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Qualifications"
                     variant="outlined"
                     value={qualifications}
@@ -262,7 +262,7 @@ function UpdateAppointment({ id, onClose }) {
 {/* 
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Date"
                     variant="outlined"
                     type="date"
@@ -275,7 +275,7 @@ function UpdateAppointment({ id, onClose }) {
                     helperText="Date of the appointment (disabled)"
                 /> */}
 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="time-select-label">Time</InputLabel>
                     <Select
                         labelId="time-select-label"
@@ -297,7 +297,7 @@ function UpdateAppointment({ id, onClose }) {
 
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Scheduled On"
                     variant="outlined"
                     type="date"

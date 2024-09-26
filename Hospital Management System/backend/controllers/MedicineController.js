@@ -62,7 +62,6 @@ const AddMedicine = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
 const UpdateMedicine = async (req, res) => {
     try {
         const { M_name, M_Quantity, M_Cost } = req.body;
@@ -84,6 +83,12 @@ const UpdateMedicine = async (req, res) => {
             return res.status(400).json({ error: 'Medicine cost must be at least 1' });
         }
 
+        // Check if another medicine with the same name exists
+        const existingMedicine = await Medicine.findOne({ where: { M_name } });
+        if (existingMedicine && existingMedicine.Medicine_ID !== req.params.id) {
+            return res.status(400).json({ error: 'Medicine with the same name already exists' });
+        }
+
         const updated = await Medicine.update(
             { M_name, M_Quantity, M_Cost },
             { where: { Medicine_ID: req.params.id } }
@@ -98,6 +103,7 @@ const UpdateMedicine = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 const DeleteMedicine = async (req, res) => {
     try {

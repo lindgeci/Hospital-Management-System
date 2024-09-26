@@ -96,15 +96,20 @@ function CreateEmergencyContact({ onClose }) {
             navigate('/dashboard/emergency_contact');
             window.location.reload();
         } catch (error) {
-            console.error('Error adding emergency contact:', error);
-            showAlert('Error adding emergency contact. Please try again.');
+            // Check for the specific error from the backend when the phone number already exists
+            if (error.response && error.response.status === 400 && error.response.data.error === 'Emergency contact with the same phone number already exists') {
+                showAlert('Phone number already exists for another emergency contact.');
+            } else {
+                // Handle general errors
+                console.error('Error adding emergency contact:', error);
+                showAlert('Error adding emergency contact. Please try again.');
+            }
         }
     };
-
     const handleValidation = async () => {
         const { Contact_Name, Phone, Relation, Patient_ID } = formData;
         const phoneRegex = /^(?:\+\d{1,3}\s?)?\d{3}(?:\d{6,7})$/;
-
+    
         if (Contact_Name === '' || Phone === '' || Relation === '' || Patient_ID === '') {
             showAlert('All fields are required.');
             return;
@@ -129,19 +134,19 @@ function CreateEmergencyContact({ onClose }) {
             showAlert('Patient ID should be at least 1');
             return;
         }
+    
         const validateName = (name) => /^[A-Za-z]+$/.test(name);
-        
         if (!validateName(Contact_Name)) {
-            showAlert('Contact Name can only contain numbers');
+            showAlert('Contact Name can only contain letters.');
             return;
         }
-
+    
         const existingEmergencyContact = Array.isArray(emergencyContacts) ? emergencyContacts.find(contact => contact.Phone === Phone) : null;
         if (existingEmergencyContact) {
-            showAlert('Phone number already exists');
+            showAlert('Phone number already exists.');
             return;
         }
-
+    
         try {
             await axios.get(`http://localhost:9004/api/patient/check/${Patient_ID}`, {
                 headers: {
@@ -151,7 +156,7 @@ function CreateEmergencyContact({ onClose }) {
             handleAddEmergencyContact();
         } catch (error) {
             console.error('Error checking patient ID:', error);
-            showAlert('Patient ID does not exist');
+            showAlert('Patient ID does not exist.');
         }
     };
 
@@ -170,7 +175,7 @@ function CreateEmergencyContact({ onClose }) {
         fullWidth
         label="Contact Name"
         variant="outlined"
-        margin="normal"
+        margin="dense"
         name="Contact_Name"
         value={formData.Contact_Name}
         onChange={handleChange}
@@ -180,13 +185,13 @@ function CreateEmergencyContact({ onClose }) {
         fullWidth
         label="Phone"
         variant="outlined"
-        margin="normal"
+        margin="dense"
         name="Phone"
         value={formData.Phone}
         onChange={handleChange}
         helperText="Enter the phone number for the emergency contact"
     />
-    <FormControl fullWidth margin="normal">
+    <FormControl fullWidth margin="dense">
         <InputLabel id="relation-label">Relation</InputLabel>
         <Select
             labelId="relation-label"
@@ -206,7 +211,7 @@ function CreateEmergencyContact({ onClose }) {
         </Select>
         <FormHelperText>Select the relationship to the patient</FormHelperText>
     </FormControl>
-    <FormControl fullWidth margin="normal">
+    <FormControl fullWidth margin="dense">
         <InputLabel id="patient-select-label">Patient</InputLabel>
         <Select
             labelId="patient-select-label"
@@ -229,7 +234,7 @@ function CreateEmergencyContact({ onClose }) {
         fullWidth
         label="Patient Phone"
         variant="outlined"
-        margin="normal"
+        margin="dense"
         value={patientPhone}
         readOnly
         helperText="This is the phone number of the selected patient"

@@ -30,7 +30,7 @@ export function Visits() {
                 <Visit
                     showCreateForm={showCreateForm}
                     setShowCreateForm={setShowCreateForm}
-                    showUpdateForm={showUpdateForm} 
+                    // showUpdateForm={showUpdateForm} 
                     setShowUpdateForm={setShowUpdateForm}
                     setSelectedVisitId={setSelectedVisitId}
                     handleUpdateButtonClick={handleUpdateButtonClick}

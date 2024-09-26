@@ -75,12 +75,12 @@ function UpdateMedicine({ id, onClose }) {
             showAlert('All fields are required.');
             return;
         }
-
+    
         if (parseInt(formData.M_Quantity) < 1 || parseFloat(formData.M_Cost) < 1) {
             showAlert('Quantity and cost must be at least 1.');
             return;
         }
-
+    
         if (
             formData.M_name === originalData.M_name &&
             formData.M_Quantity === originalData.M_Quantity &&
@@ -89,7 +89,7 @@ function UpdateMedicine({ id, onClose }) {
             showAlert('Data must be changed before updating.');
             return;
         }
-
+    
         try {
             await axios.put(`http://localhost:9004/api/medicine/update/${id}`, formData, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -97,10 +97,11 @@ function UpdateMedicine({ id, onClose }) {
             window.location.reload();
         } catch (error) {
             console.error('Error updating medicine:', error);
-            showAlert('Error updating medicine. Please try again.');
+            const backendMessage = error.response?.data?.error || 'Error updating medicine. Please try again.'; // Fetch backend error message or show a generic one
+            showAlert(backendMessage);
         }
     };
-
+    
     const showAlert = (message) => {
         setAlertMessage(message);
         setShowErrorModal(true);
@@ -108,69 +109,73 @@ function UpdateMedicine({ id, onClose }) {
 
     return (
         <Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
-        <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
-            {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
-            <Typography variant="h6" component="h1" gutterBottom>Update Medicine</Typography>
-            <Box mb={2}>
-                <TextField
-                    fullWidth
-                    select
-                    label="Medicine Name"
-                    variant="outlined"
-                    id="M_name"
-                    name="M_name"
-                    value={formData.M_name}
-                    onChange={handleChange}
-                    disabled
-                    helperText="Select the medicine to update"
-                >
-                    <MenuItem value='' disabled>Select Medicine</MenuItem>
-                    {Object.keys(medicineCosts).map(medicine => (
-                        <MenuItem key={medicine} value={medicine}>{medicine}</MenuItem>
-                    ))}
-                </TextField>
-            </Box>
-            <Box mb={2}>
-                <TextField
-                    fullWidth
-                    select
-                    label="Quantity"
-                    variant="outlined"
-                    id="M_Quantity"
-                    name="M_Quantity"
-                    value={formData.M_Quantity}
-                    onChange={handleChange}
-                    helperText="Select the quantity of medicine"
-                >
-                    {[...Array(10)].map((_, index) => (
-                        <MenuItem key={index + 1} value={index + 1}>
-                            {index + 1}
-                        </MenuItem>
-                    ))}
-                </TextField>
-            </Box>
+    <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
+        {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
+        <Typography variant="h6" component="h1" gutterBottom>Update Medicine</Typography>
+        
+        <Box mb={1}>
             <TextField
-                margin="normal"
                 fullWidth
-                label="Cost"
+                select
+                label="Medicine Name"
                 variant="outlined"
-                id="M_Cost"
-                name="M_Cost"
-                type="text"
-                value={formData.M_Cost}
-                readOnly
-                InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                }}
-                helperText="The cost is calculated based on selected medicine and quantity"
-            />
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                <Button variant="contained" color="primary" onClick={handleUpdateMedicine} sx={{ mr: 1 }}>Submit</Button>
-                <Button variant="outlined" onClick={onClose}>Cancel</Button>
-            </Box>
+                id="M_name"
+                name="M_name"
+                value={formData.M_name}
+                onChange={handleChange}
+                // disabled
+                helperText="Select the medicine to update"
+            >
+                <MenuItem value='' disabled>Select Medicine</MenuItem>
+                {Object.keys(medicineCosts).map(medicine => (
+                    <MenuItem key={medicine} value={medicine}>{medicine}</MenuItem>
+                ))}
+            </TextField>
         </Box>
-    </Modal>
-    
+
+        <Box mb={1}>
+            <TextField
+                fullWidth
+                select
+                label="Quantity"
+                variant="outlined"
+                id="M_Quantity"
+                name="M_Quantity"
+                value={formData.M_Quantity}
+                onChange={handleChange}
+                helperText="Select the quantity of medicine"
+            >
+                {[...Array(10)].map((_, index) => (
+                    <MenuItem key={index + 1} value={index + 1}>
+                        {index + 1}
+                    </MenuItem>
+                ))}
+            </TextField>
+        </Box>
+
+        <TextField
+            margin="normal"
+            fullWidth
+            label="Cost"
+            variant="outlined"
+            id="M_Cost"
+            name="M_Cost"
+            type="text"
+            value={formData.M_Cost}
+            readOnly
+            InputProps={{
+                startAdornment: <InputAdornment position="start">$</InputAdornment>,
+            }}
+            helperText="The cost is calculated based on selected medicine and quantity"
+        />
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+            <Button variant="contained" color="primary" onClick={handleUpdateMedicine} sx={{ mr: 1 }}>Submit</Button>
+            <Button variant="outlined" onClick={onClose}>Cancel</Button>
+        </Box>
+    </Box>
+</Modal>
+
     );
 }
 

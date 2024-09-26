@@ -113,7 +113,7 @@ function CreateMedicalHistory({ onClose }) {
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
                 <Typography variant="h6" component="h1" gutterBottom>Add Medical History</Typography>
                 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="patient-select-label">Patient</InputLabel>
                     <Select
                         labelId="patient-select-label"
@@ -133,7 +133,7 @@ function CreateMedicalHistory({ onClose }) {
                 </FormControl>
                 
                 {/* Allergies Dropdown */}
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="allergies-select-label">Allergies</InputLabel>
                     <Select
                         labelId="allergies-select-label"
@@ -150,7 +150,7 @@ function CreateMedicalHistory({ onClose }) {
                 </FormControl>
 
                 {/* Pre Conditions Dropdown */}
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="pre-conditions-select-label">Pre Conditions</InputLabel>
                     <Select
                         labelId="pre-conditions-select-label"
@@ -171,7 +171,7 @@ function CreateMedicalHistory({ onClose }) {
                     fullWidth
                     label="Patient Phone"
                     variant="outlined"
-                    margin="normal"
+                    margin="dense"
                     value={patientPhone}
                     readOnly
                     helperText="This is the phone number of the selected patient"

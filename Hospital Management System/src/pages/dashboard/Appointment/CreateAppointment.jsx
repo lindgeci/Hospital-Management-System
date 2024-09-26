@@ -176,7 +176,7 @@ function CreateAppointment({ onClose }) {
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
                 <Typography variant="h6" component="h1" gutterBottom>Add Appointment</Typography>
 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="patient-select-label">Patient</InputLabel>
                     <Select
                         labelId="patient-select-label"
@@ -200,13 +200,13 @@ function CreateAppointment({ onClose }) {
                     fullWidth
                     label="Patient Phone"
                     variant="outlined"
-                    margin="normal"
+                    margin="dense"
                     value={patientPhone}
                     readOnly
                     helperText="This is the phone number of the selected patient"
                 />
 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="doctor-select-label">Doctor</InputLabel>
                     <Select
                         labelId="doctor-select-label"
@@ -230,7 +230,7 @@ function CreateAppointment({ onClose }) {
                     fullWidth
                     label="Qualifications"
                     variant="outlined"
-                    margin="normal"
+                    margin="dense"
                     value={qualifications}
                     readOnly
                     helperText="This is the qualifications of the selected doctor"
@@ -238,7 +238,7 @@ function CreateAppointment({ onClose }) {
 
                 {/* <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Date"
                     variant="outlined"
                     type="date"
@@ -251,7 +251,7 @@ function CreateAppointment({ onClose }) {
                     helperText="Automatically set to today's date"
                 /> */}
 
-<FormControl fullWidth variant="outlined" margin="normal">
+<FormControl fullWidth variant="outlined" margin="dense">
     <InputLabel id="time-select-label">Time</InputLabel>
     <Select
         labelId="time-select-label"
@@ -273,7 +273,7 @@ function CreateAppointment({ onClose }) {
 
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Scheduled On"
                     variant="outlined"
                     type="date"

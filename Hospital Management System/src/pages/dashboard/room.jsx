@@ -31,7 +31,7 @@ export function Rooms() {
                 <Room
                     showCreateForm={showCreateForm}
                     setShowCreateForm={setShowCreateForm}
-                    showUpdateForm={showUpdateForm} 
+                    // showUpdateForm={showUpdateForm} 
                     setShowUpdateForm={setShowUpdateForm}
                     setSelectedRoomId={setSelectedRoomId}
                     handleUpdateButtonClick={handleUpdateButtonClick}

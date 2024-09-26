@@ -115,7 +115,7 @@ function CreateBill({ onClose }) {
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
                 <Typography variant="h6" component="h1" gutterBottom>Add Bill</Typography>
 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="patient-select-label">Patient</InputLabel>
                     <Select
                         labelId="patient-select-label"
@@ -139,7 +139,7 @@ function CreateBill({ onClose }) {
                     fullWidth
                     label="Patient Personal Number"
                     variant="outlined"
-                    margin="normal"
+                    margin="dense"
                     value={patientPersonalNumber}
                     readOnly
                     helperText="This is the personal number of the selected patient"
@@ -148,7 +148,7 @@ function CreateBill({ onClose }) {
                 {/* Date Issued */}
                 {/* <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Date Issued"
                     variant="outlined"
                     type="date"
@@ -162,7 +162,7 @@ function CreateBill({ onClose }) {
                 /> */}
 
                 {/* Description with Payment Type Dropdown */}
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="description-select-label">Description</InputLabel>
                     <Select
                         labelId="description-select-label"
@@ -183,7 +183,7 @@ function CreateBill({ onClose }) {
                 {/* Amount */}
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Amount"
                     variant="outlined"
                     type="number"
@@ -198,7 +198,7 @@ function CreateBill({ onClose }) {
                 />
 
                 {/* Payment Status */}
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="payment-status-select-label">Payment Status</InputLabel>
                     <Select
                         labelId="payment-status-select-label"

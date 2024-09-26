@@ -151,7 +151,7 @@ function UpdateBill({ id, onClose }) {
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={closeErrorModal} />}
                 <Typography variant="h6" component="h1" gutterBottom>Update Bill</Typography>
 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="patient-select-label">Patient</InputLabel>
                     <Select
                         labelId="patient-select-label"
@@ -175,7 +175,7 @@ function UpdateBill({ id, onClose }) {
                     fullWidth
                     label="Patient Personal Number"
                     variant="outlined"
-                    margin="normal"
+                    margin="dense"
                     value={personalNumber}
                     readOnly
                     helperText="This is the personal number of the selected patient"
@@ -183,7 +183,7 @@ function UpdateBill({ id, onClose }) {
 
                 {/* <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Date Issued"
                     variant="outlined"
                     type="date"
@@ -198,7 +198,7 @@ function UpdateBill({ id, onClose }) {
 
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Description"
                     variant="outlined"
                     id="Description"
@@ -212,7 +212,7 @@ function UpdateBill({ id, onClose }) {
 
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Amount"
                     variant="outlined"
                     type="number"
@@ -225,7 +225,7 @@ function UpdateBill({ id, onClose }) {
                      helperText="Amount should be between 10 and 50"
                 />
 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="payment-status-select-label">Payment Status</InputLabel>
                     <Select
                         labelId="payment-status-select-label"

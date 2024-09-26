@@ -24,7 +24,7 @@ function CreateDepartment({ onClose }) {
 
     const fetchDepartments = async () => {
         try {
-            const response = await axios.get('http://localhost:9004/api/medicine', {
+            const response = await axios.get('http://localhost:9004/api/department', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -54,7 +54,12 @@ function CreateDepartment({ onClose }) {
             window.location.reload();
         } catch (error) {
             console.error('Error adding Department:', error);
-            setAlertMessage('Error adding Department. Please try again.');   
+            if (error.response && error.response.data.error) {
+                setAlertMessage(error.response.data.error); // Use the message from the backend
+            } else {
+                setAlertMessage('Error adding Department. Please try again.');   
+            }
+            setShowErrorModal(true);
         }
     };
 
@@ -89,12 +94,6 @@ function CreateDepartment({ onClose }) {
         // Check if comments contain any numbers
         if (/\d/.test(Dept_name)) {
             showAlert('Department Name cannot contain numbers');
-            return;
-        }
-        // Check if department with the same name already exists
-        const existingDepartment = departments.find(department => department.Dept_name === Dept_name);
-        if (existingDepartment) {
-            showAlert('Department with the same name already exists');
             return;
         }
 

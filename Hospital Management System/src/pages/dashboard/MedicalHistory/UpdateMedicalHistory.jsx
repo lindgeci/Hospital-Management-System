@@ -135,7 +135,7 @@ function UpdateMedicalHistory({ id, onClose }) {
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={closeErrorModal} />}
                 <Typography variant="h6" component="h1" gutterBottom>Update Medical History</Typography>
 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="patient-select-label">Patient</InputLabel>
                     <Select
     labelId="patient-select-label"
@@ -155,7 +155,7 @@ function UpdateMedicalHistory({ id, onClose }) {
                     <FormHelperText>Select the patient for this medical history</FormHelperText>
                 </FormControl>
 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="allergies-select-label">Allergies</InputLabel>
                     <Select
                         labelId="allergies-select-label"
@@ -171,7 +171,7 @@ function UpdateMedicalHistory({ id, onClose }) {
                     <FormHelperText>Select if the patient has any allergies</FormHelperText>
                 </FormControl>
 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="preconditions-select-label">Pre Conditions</InputLabel>
                     <Select
                         labelId="preconditions-select-label"
@@ -191,7 +191,7 @@ function UpdateMedicalHistory({ id, onClose }) {
                     fullWidth
                     label="Patient Phone"
                     variant="outlined"
-                    margin="normal"
+                    margin="dense"
                     value={patientPhone}
                     readOnly
                     helperText="This is the phone number of the selected patient"

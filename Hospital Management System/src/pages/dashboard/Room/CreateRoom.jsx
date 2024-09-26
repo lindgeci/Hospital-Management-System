@@ -1,7 +1,7 @@
 import axios from 'axios';
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Box, TextField, Button, Typography, Select, MenuItem, InputLabel, FormControl, Modal, InputAdornment } from '@mui/material';
+import { Box, TextField, Button, Typography, Select, MenuItem, InputLabel, FormControl, Modal, InputAdornment, FormHelperText } from '@mui/material';
 import Cookies from 'js-cookie';
 
 const ErrorModal = lazy(() => import('../../../components/ErrorModal'));
@@ -10,20 +10,30 @@ function CreateRoom({ onClose }) {
     const [formData, setFormData] = useState({
         Room_type: '',
         Patient_ID: '',
-        Room_cost: '',
     });
     const [patients, setPatients] = useState([]);
     const [alertMessage, setAlertMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
+    const [patientPhone, setPatientPhone] = useState(''); // New state for the patient's phone
     const navigate = useNavigate();
     const location = useLocation();
     const token = Cookies.get('token');
+
+    // Room types with their corresponding costs
+    const roomTypes = {
+        'Standard': 50.00,
+        'Deluxe': 100.00,
+        'VIP': 200.00,
+    };
+
+    const [roomCost, setRoomCost] = useState(''); // State to store the dynamic room cost
 
     useEffect(() => {
         fetchPatients();
         const patientId = location.state?.patientId;
         if (patientId) {
             setFormData((prevState) => ({ ...prevState, Patient_ID: patientId }));
+            fetchPatientPhone(patientId); // Fetch phone number for the selected patient
         }
     }, [location.state]);
 
@@ -38,14 +48,35 @@ function CreateRoom({ onClose }) {
         }
     };
 
+    const fetchPatientPhone = async (patientId) => {
+        try {
+            const response = await axios.get(`http://localhost:9004/api/patient/${patientId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            setPatientPhone(response.data.Phone); // Assuming the response contains the Phone field
+        } catch (error) {
+            console.error('Error fetching patient phone:', error);
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prevState) => ({ ...prevState, [name]: value }));
+
+        if (name === 'Room_type') {
+            setRoomCost(roomTypes[value] || ''); // Set room cost based on selected room type
+        }
+
+        // If the selected patient changes, fetch the new patient's phone
+        if (name === 'Patient_ID') {
+            fetchPatientPhone(value);
+        }
     };
 
     const handleAddRoom = async () => {
+        const completeFormData = { ...formData, Room_cost: roomCost }; // Add the room cost to the formData before submitting
         try {
-            await axios.post('http://localhost:9004/api/room/create', formData, {
+            await axios.post('http://localhost:9004/api/room/create', completeFormData, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             navigate('/dashboard/room');
@@ -58,18 +89,14 @@ function CreateRoom({ onClose }) {
     };
 
     const handleValidation = async () => {
-        const { Room_type, Patient_ID, Room_cost } = formData;
+        const { Room_type, Patient_ID } = formData;
 
-        if (Room_type === '' || Patient_ID === '' || Room_cost === '') {
+        if (Room_type === '' || Patient_ID === '' || roomCost === '') {
             showAlert('All fields are required');
             return;
         }
         if (parseInt(Patient_ID) < 1) {
             showAlert('Patient ID cannot be less than 1');
-            return;
-        }
-        if (!isValidDecimal(Room_cost)) {
-            showAlert('Cost must be a valid decimal (10.2)');
             return;
         }
 
@@ -86,8 +113,6 @@ function CreateRoom({ onClose }) {
         handleAddRoom();
     };
 
-    const isValidDecimal = (value) => /^\d{0,8}(\.\d{1,2})?$/.test(value);
-
     const showAlert = (message) => {
         setAlertMessage(message);
         setShowErrorModal(true);
@@ -102,44 +127,80 @@ function CreateRoom({ onClose }) {
                     </Suspense>
                 )}
                 <Typography variant="h6" component="h1" gutterBottom>Add Room</Typography>
-                {['Room_type', 'Patient_ID', 'Room_cost'].map((field, idx) => (
-                    <Box key={idx} mb={2}>
-                        {field === 'Patient_ID' ? (
-                            <FormControl fullWidth variant="outlined">
-                                <InputLabel id="patient-select-label">Patient</InputLabel>
-                                <Select
-                                    labelId="patient-select-label"
-                                    id={field}
-                                    name={field}
-                                    value={formData[field]}
-                                    onChange={handleChange}
-                                    label="Patient"
-                                >
-                                    <MenuItem value=""><em>Select Patient</em></MenuItem>
-                                    {patients.map(patient => (
-                                        <MenuItem key={patient.Patient_ID} value={patient.Patient_ID}>
-                                            {`${patient.Patient_Fname} ${patient.Patient_Lname}`}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        ) : (
-                            <TextField
-                                fullWidth
-                                label={field.replace('_', ' ')}
-                                variant="outlined"
-                                id={field}
-                                name={field}
-                                type={field === 'Room_cost' ? 'number' : 'text'}
-                                value={formData[field]}
-                                onChange={handleChange}
-                                InputProps={field === 'Room_cost' ? {
-                                    startAdornment: <InputAdornment position="start">€</InputAdornment>,
-                                } : null}
-                            />
-                        )}
-                    </Box>
-                ))}
+
+                {/* Room Type Selection */}
+                <Box mb={2}>
+                    <FormControl fullWidth variant="outlined">
+                        <InputLabel id="room-type-select-label">Room Type</InputLabel>
+                        <Select
+                            labelId="room-type-select-label"
+                            id="Room_type"
+                            name="Room_type"
+                            value={formData.Room_type}
+                            onChange={handleChange}
+                            label="Room Type"
+                        >
+                            <MenuItem value=""><em>Select Room Type</em></MenuItem>
+                            {Object.keys(roomTypes).map(type => (
+                                <MenuItem key={type} value={type}>{type}</MenuItem>
+                            ))}
+                        </Select>
+                        <FormHelperText>Select the room type.</FormHelperText>
+                    </FormControl>
+                </Box>
+                {/* Patient Selection */}
+                <Box mb={2}>
+                    <FormControl fullWidth variant="outlined">
+                        <InputLabel id="patient-select-label">Patient</InputLabel>
+                        <Select
+                            labelId="patient-select-label"
+                            id="Patient_ID"
+                            name="Patient_ID"
+                            value={formData.Patient_ID}
+                            onChange={handleChange}
+                            label="Patient"
+                            
+                        >
+                            <MenuItem value=""><em>Select Patient</em></MenuItem>
+                            {patients.map(patient => (
+                                <MenuItem key={patient.Patient_ID} value={patient.Patient_ID}>
+                                    {`${patient.Patient_Fname} ${patient.Patient_Lname}`}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                        <FormHelperText>Select the patient for the room </FormHelperText>
+                    </FormControl>
+                </Box>
+
+                {/* Displaying Patient Phone Number */}
+                <Box mb={2}>
+                    <TextField
+                        fullWidth
+                        label="Patient Phone"
+                        variant="outlined"
+                        value={patientPhone}
+                        InputProps={{
+                            readOnly: true, // Make the input read-only
+                        }}
+                        helperText="This is the phone number of the selected patient"
+                    />
+                </Box>
+
+                {/* Displaying Room Cost */}
+                <Box mb={2}>
+                    <TextField
+                        fullWidth
+                        label="Room Cost"
+                        variant="outlined"
+                        value={roomCost}
+                        InputProps={{
+                            startAdornment: <InputAdornment position="start">€</InputAdornment>,
+                            readOnly: true, // Room cost is read-only
+                        }}
+                        helperText="The cost of the selected room."
+                    />
+                </Box>
+
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>
                     <Button variant="outlined" onClick={onClose}>Cancel</Button>

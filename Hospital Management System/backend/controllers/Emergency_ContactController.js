@@ -105,10 +105,12 @@ const AddEmergency_Contact = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+const { Op } = require('sequelize'); // Ensure this is imported from Sequelize
 
 const UpdateEmergency_Contact = async (req, res) => {
     try {
         const { Contact_Name, Phone, Relation, Patient_ID } = req.body;
+        const { id } = req.params;
 
         // Validation
         if (!Contact_Name || Contact_Name.length < 2) {
@@ -124,20 +126,35 @@ const UpdateEmergency_Contact = async (req, res) => {
             return res.status(400).json({ error: 'Patient_ID cannot be empty' });
         }
 
+        // Check if the phone number is already in use by another contact
+        const existingContact = await Emergency_Contact.findOne({
+            where: {
+                Phone: Phone,
+                Contact_ID: { [Op.ne]: id } // Exclude the current contact by ID
+            }
+        });
+
+        if (existingContact) {
+            return res.status(400).json({ error: 'Phone number is already in use by another emergency contact' });
+        }
+
+        // Update emergency contact
         const updated = await Emergency_Contact.update(
             { Contact_Name, Phone, Relation, Patient_ID },
-            { where: { Contact_ID: req.params.id } }
+            { where: { Contact_ID: id } }
         );
+
         if (updated[0] === 0) {
-            res.status(404).json({ error: 'Emergency Contact not found or not updated' });
-            return;
+            return res.status(404).json({ error: 'Emergency Contact not found or not updated' });
         }
-        res.json({ success: true, message: 'Emergency_Contact updated successfully' });
+
+        res.json({ success: true, message: 'Emergency Contact updated successfully' });
     } catch (error) {
         console.error('Error updating emergency contact:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 const DeleteEmergency_Contact = async (req, res) => {
     try {

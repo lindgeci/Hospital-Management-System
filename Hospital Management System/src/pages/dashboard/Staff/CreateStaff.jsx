@@ -160,7 +160,7 @@ function CreateStaff({ onClose }) {
                 
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="First Name"
                     variant="outlined"
                     id="Emp_Fname"
@@ -173,7 +173,7 @@ function CreateStaff({ onClose }) {
                 
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Last Name"
                     variant="outlined"
                     id="Emp_Lname"
@@ -193,7 +193,7 @@ function CreateStaff({ onClose }) {
                 
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Email"
                     variant="outlined"
                     id="Email"
@@ -206,7 +206,7 @@ function CreateStaff({ onClose }) {
                 
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Address"
                     variant="outlined"
                     id="Address"
@@ -217,7 +217,7 @@ function CreateStaff({ onClose }) {
                     helperText="Only letters are allowed."
                 />
                 
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="department-select-label">Department</InputLabel>
                     <Select
                         labelId="department-select-label"
@@ -239,7 +239,7 @@ function CreateStaff({ onClose }) {
                 
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Date of Birth"
                     variant="outlined"
                     type="date"
@@ -251,7 +251,7 @@ function CreateStaff({ onClose }) {
                     helperText="Select your date of birth."
                 />
                 
-                <FormControl fullWidth margin="normal">
+                <FormControl fullWidth margin="dense">
                     <InputLabel id="qualifications-label">Qualifications</InputLabel>
                     <Select
                         labelId="qualifications-label"
@@ -270,7 +270,7 @@ function CreateStaff({ onClose }) {
                     <FormHelperText>Select your qualifications.</FormHelperText>
                 </FormControl>
 
-                <FormControl fullWidth margin="normal">
+                <FormControl fullWidth margin="dense">
                     <InputLabel id="specialization-label">Specialization</InputLabel>
                     <Select
                         labelId="specialization-label"

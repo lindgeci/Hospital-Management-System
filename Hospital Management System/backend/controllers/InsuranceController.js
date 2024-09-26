@@ -1,4 +1,5 @@
 const Insurance = require('../models/Insurance');
+const { Op, Sequelize } = require('sequelize'); //
 
 const FindAllInsurance = async (req, res) => {
     try {
@@ -77,8 +78,6 @@ const AddInsurance = async (req, res) => {
     }
 };
 
-
-
 const UpdateInsurance = async (req, res) => {
     try {
         const { Patient_ID, Ins_Code, End_Date, Provider, Dental } = req.body;
@@ -88,7 +87,7 @@ const UpdateInsurance = async (req, res) => {
             return res.status(400).json({ error: 'Ins_Code cannot be empty' });
         }
         const insCodeStr = Ins_Code.toString();
-        if (insCodeStr.length !=7) {
+        if (insCodeStr.length !== 7) {
             return res.status(400).json({ error: 'Ins_Code must be 7 characters long' });
         }
         if (!End_Date) {
@@ -104,6 +103,33 @@ const UpdateInsurance = async (req, res) => {
             return res.status(400).json({ error: 'Provider cannot be empty' });
         }
 
+        // Check if this patient already has an insurance record excluding the current one being updated
+        const existingInsuranceForPatient = await Insurance.findOne({
+            where: {
+                Patient_ID,
+                Policy_Number: { [Op.ne]: req.params.id } // Exclude the current insurance being updated
+            }
+        });
+
+        // If the patient already has insurance, prevent update
+        if (existingInsuranceForPatient) {
+            return res.status(400).json({ error: 'This patient already has an insurance record.' });
+        }
+
+        // Check if the Ins_Code is already in use by another insurance record (excluding the current one)
+        const existingInsuranceWithCode = await Insurance.findOne({
+            where: {
+                Ins_Code,
+                Policy_Number: { [Op.ne]: req.params.id } // Exclude the current insurance being updated
+            }
+        });
+
+        // If the insurance code is already used by another record, prevent update
+        if (existingInsuranceWithCode) {
+            return res.status(400).json({ error: 'This insurance code is already in use by another record.' });
+        }
+
+        // Proceed with the update since no conflicting insurance exists
         const updated = await Insurance.update(
             { Patient_ID, Ins_Code, End_Date, Provider, Dental },
             { where: { Policy_Number: req.params.id } }
@@ -118,6 +144,9 @@ const UpdateInsurance = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+
+
 
 const DeleteInsurance = async (req, res) => {
     try {

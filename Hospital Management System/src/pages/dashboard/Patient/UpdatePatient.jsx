@@ -1,7 +1,7 @@
 import axios from 'axios';
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, TextField, Button, Typography, Select, MenuItem, InputLabel, FormControl, Modal } from '@mui/material';
+import { Box, TextField, Button, Typography, FormHelperText, Select, MenuItem, InputLabel, FormControl, Modal } from '@mui/material';
 import Cookies from 'js-cookie';
 
 // Lazy load the ErrorModal component
@@ -164,7 +164,7 @@ function UpdatePatient({ id, onClose }) {
                 <Typography variant="h6" component="h1" gutterBottom>Update Patient</Typography>
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Personal Number"
                     variant="outlined"
                     id="Personal_Number"
@@ -173,11 +173,11 @@ function UpdatePatient({ id, onClose }) {
                     placeholder="Enter Personal Number"
                     value={formData.Personal_Number}
                     onChange={handleChange}
-
+                    helperText="Enter a unique personal number."
                 />
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="First Name"
                     variant="outlined"
                     id="Patient_Fname"
@@ -185,10 +185,11 @@ function UpdatePatient({ id, onClose }) {
                     placeholder="Enter Firstname"
                     value={formData.Patient_Fname}
                     onChange={handleChange}
+                    helperText="Only letters are allowed."
                 />
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Last Name"
                     variant="outlined"
                     id="Patient_Lname"
@@ -196,10 +197,11 @@ function UpdatePatient({ id, onClose }) {
                     placeholder="Enter Lastname"
                     value={formData.Patient_Lname}
                     onChange={handleChange}
+                    helperText="Only letters are allowed."
                 />
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Birth Date"
                     variant="outlined"
                     type="date"
@@ -209,8 +211,9 @@ function UpdatePatient({ id, onClose }) {
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
                     disabled
+                    helperText="Enter your birth date."
                 />
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="gender-select-label">Gender</InputLabel>
                     <Select
                         labelId="gender-select-label"
@@ -227,8 +230,9 @@ function UpdatePatient({ id, onClose }) {
                         <MenuItem value="Other">Other</MenuItem>
                         <MenuItem value="Prefer not to say">Prefer not to say</MenuItem>
                     </Select>
+                    <FormHelperText>Please select your Gender.</FormHelperText>
                 </FormControl>
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="blood-type-select-label">Blood Type</InputLabel>
                     <Select
                         labelId="blood-type-select-label"
@@ -249,10 +253,11 @@ function UpdatePatient({ id, onClose }) {
                         <MenuItem value="O+">O+</MenuItem>
                         <MenuItem value="O-">O-</MenuItem>
                     </Select>
+                    <FormHelperText>Please select a Blood Type.</FormHelperText>
                 </FormControl>
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Email"
                     variant="outlined"
                     id="Email"
@@ -260,10 +265,11 @@ function UpdatePatient({ id, onClose }) {
                     placeholder="Enter email"
                     value={formData.Email}
                     onChange={handleChange}
+                    helperText="Must end with @ubt-uni.net or .com."
                 />
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Phone"
                     variant="outlined"
                     id="Phone"
@@ -271,6 +277,7 @@ function UpdatePatient({ id, onClose }) {
                     placeholder="Enter Phone"
                     value={formData.Phone}
                     onChange={handleChange}
+                    helperText="Enter a valid phone number."
                 />
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleUpdatePatient} sx={{ mr: 1 }}>Submit</Button>

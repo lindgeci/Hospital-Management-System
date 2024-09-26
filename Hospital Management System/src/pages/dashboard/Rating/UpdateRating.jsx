@@ -3,7 +3,7 @@ import axios from 'axios';
 import ErrorModal from '../../../components/ErrorModal';
 import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
-import { Box, TextField, Button, Typography, Modal, MenuItem, FormHelperText } from '@mui/material';
+import { Box, TextField, Button, Typography, Modal, MenuItem } from '@mui/material';
 
 function UpdateRating({ id, onClose }) {
     const [formData, setFormData] = useState({
@@ -19,10 +19,12 @@ function UpdateRating({ id, onClose }) {
     const navigate = useNavigate();
     const token = Cookies.get('token');
     const [staff, setStaff] = useState([]);
+    const [existingRatings, setExistingRatings] = useState([]); // To store existing ratings
 
     useEffect(() => {
         fetchStaff();
         fetchData();
+        fetchExistingRatings(); // Fetch existing ratings when component mounts
     }, [id]);
 
     const fetchStaff = async () => {
@@ -60,6 +62,19 @@ function UpdateRating({ id, onClose }) {
         }
     };
 
+    const fetchExistingRatings = async () => {
+        try {
+            const response = await axios.get('http://localhost:9004/api/rating', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            setExistingRatings(response.data); // Assuming the endpoint returns a list of ratings
+        } catch (error) {
+            console.error('Error fetching existing ratings:', error);
+        }
+    };
+
     const fetchStaffEmail = async (empId) => {
         try {
             const response = await axios.get(`http://localhost:9004/api/staff/${empId}`, {
@@ -93,7 +108,6 @@ function UpdateRating({ id, onClose }) {
             showAlert("Comment cannot be empty.");
             return;
         }
-        // Validate that comments do not contain numbers
         if (/\d/.test(formData.Comments)) {
             showAlert("Comments cannot contain numbers.");
             return;
@@ -110,20 +124,26 @@ function UpdateRating({ id, onClose }) {
             showAlert('Character limit reached (30).');
             return;
         }
-    
+        
+        // Check if the employee has already been rated
+        const existingRating = existingRatings.find(rating => rating.Emp_ID === formData.Emp_ID);
+        if (existingRating && existingRating.Rating_ID !== id) {
+            showAlert('Employee has already been rated');
+            return;
+        }
+
         try {
-            const currentDate = new Date().toISOString().slice(0, 10);
             await axios.put(`http://localhost:9004/api/rating/update/${id}`, {
                 Emp_ID: formData.Emp_ID,
                 Rating: formData.Rating,
                 Comments: formData.Comments,
-                Date: currentDate,
+                Date: formData.Date,
             }, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-    
+
             navigate('/dashboard/rating');
             window.location.reload();
         } catch (error) {
@@ -131,7 +151,6 @@ function UpdateRating({ id, onClose }) {
             showAlert('Error updating rating. Please try again.');
         }
     };
-    
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -148,7 +167,7 @@ function UpdateRating({ id, onClose }) {
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
                 <Typography variant="h6" component="h1" gutterBottom>Update Rating</Typography>
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     select
                     label="Employee"
@@ -168,7 +187,7 @@ function UpdateRating({ id, onClose }) {
                 </TextField>
 
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     label="Staff Email"
                     variant="outlined"
@@ -179,7 +198,7 @@ function UpdateRating({ id, onClose }) {
                 />
                 
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     select
                     label="Rating"
@@ -197,7 +216,7 @@ function UpdateRating({ id, onClose }) {
                 </TextField>
 
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     label="Comments"
                     variant="outlined"
@@ -205,20 +224,8 @@ function UpdateRating({ id, onClose }) {
                     name="Comments"
                     value={formData.Comments}
                     onChange={handleChange}
-                    helperText="Enter your comments (max 30 characters).."
+                    helperText="Enter your comments (max 30 characters)."
                 />
-               
-                {/* <TextField
-                    margin="normal"
-                    fullWidth
-                    label="Date"
-                    variant="outlined"
-                    id="Date"
-                    name="Date"
-                    value={formData.Date}
-                    onChange={handleChange}
-                    disabled
-                /> */}
                 
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleUpdateRating} sx={{ mr: 1 }}>Submit</Button>

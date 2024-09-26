@@ -111,7 +111,7 @@ function UpdateDepartment({ id, onClose }) {
                 <Typography variant="h6" component="h1" gutterBottom>Update Department</Typography>
 
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     label="Department Head"
                     variant="outlined"
@@ -124,7 +124,7 @@ function UpdateDepartment({ id, onClose }) {
                 />
                 
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     label="Department Name"
                     variant="outlined"
@@ -138,7 +138,7 @@ function UpdateDepartment({ id, onClose }) {
                 />
                 
                 <TextField
-                    margin="normal"
+                    margin="dense"
                     fullWidth
                     label="Employee Count"
                     variant="outlined"

@@ -141,7 +141,7 @@ function CreatePatient({ onClose }) {
                 <Typography variant="h6" component="h1" gutterBottom>Add Patient</Typography>
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Personal Number"
                     variant="outlined"
                     id="Personal_Number"
@@ -154,7 +154,7 @@ function CreatePatient({ onClose }) {
                 />
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="First Name"
                     variant="outlined"
                     id="Patient_Fname"
@@ -166,7 +166,7 @@ function CreatePatient({ onClose }) {
                 />
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Last Name"
                     variant="outlined"
                     id="Patient_Lname"
@@ -178,7 +178,7 @@ function CreatePatient({ onClose }) {
                 />
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Birth Date"
                     variant="outlined"
                     type="date"
@@ -187,9 +187,9 @@ function CreatePatient({ onClose }) {
                     value={formData.Birth_Date}
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
-                     helperText="Enter your birth date."
+                    helperText="Enter your birth date."
                 />
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="gender-select-label">Gender</InputLabel>
                     <Select
                         labelId="gender-select-label"
@@ -207,7 +207,7 @@ function CreatePatient({ onClose }) {
                     </Select>
                     <FormHelperText>Please select your Gender.</FormHelperText>
                 </FormControl>
-                <FormControl fullWidth variant="outlined" margin="normal">
+                <FormControl fullWidth variant="outlined" margin="dense">
                     <InputLabel id="blood-type-select-label">Blood Type</InputLabel>
                     <Select
                         labelId="blood-type-select-label"
@@ -231,7 +231,7 @@ function CreatePatient({ onClose }) {
                 </FormControl>
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Email"
                     variant="outlined"
                     id="Email"
@@ -239,11 +239,11 @@ function CreatePatient({ onClose }) {
                     placeholder="Enter email"
                     value={formData.Email}
                     onChange={handleChange}
-                     helperText="Must end with @ubt-uni.net or .com."
+                    helperText="Must end with @ubt-uni.net or .com."
                 />
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Phone"
                     variant="outlined"
                     id="Phone"

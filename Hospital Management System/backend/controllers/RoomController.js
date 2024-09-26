@@ -27,7 +27,12 @@ const FindSingleRoom = async (req, res) => {
 const AddRoom = async (req, res) => {
     try {
         const { Room_type, Patient_ID, Room_cost } = req.body;
-        
+
+        // Validate required fields
+        if (!Room_type || !Patient_ID || Room_cost === undefined) {
+            return res.status(400).json({ error: 'All fields (Room_type, Patient_ID, Room_cost) are required' });
+        }
+
         const newRoom = await Room.create({
             Room_type,
             Patient_ID,
@@ -39,13 +44,18 @@ const AddRoom = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
 const UpdateRoom = async (req, res) => {
     try {
         const { Room_type, Patient_ID, Room_cost } = req.body;
+
+        // Validate required fields
+        if (!Room_type || !Patient_ID || Room_cost === undefined) {
+            return res.status(400).json({ error: 'All fields (Room_type, Patient_ID, Room_cost) are required' });
+        }
+
         const updated = await Room.update(
             { Room_type, Patient_ID, Room_cost },
-            { where: { Room_ID : req.params.id } }
+            { where: { Room_ID: req.params.id } }
         );
         if (updated[0] === 0) {
             res.status(404).json({ error: 'Room not found or not updated' });
@@ -57,6 +67,7 @@ const UpdateRoom = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 const DeleteRoom = async (req, res) => {
     try {

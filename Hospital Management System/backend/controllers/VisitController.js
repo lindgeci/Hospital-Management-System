@@ -50,6 +50,14 @@ const createVisit = async (req, res) => {
             return res.status(404).json({ error: 'Doctor not found' });
         }
 
+        // Validation: Ensure the date of visit is not in the past
+        const currentDate = new Date();
+        const visitDate = new Date(date_of_visit);
+
+        if (visitDate < currentDate.setHours(0, 0, 0, 0)) {  // Sets current date to midnight (to compare only date)
+            return res.status(400).json({ error: 'Cannot schedule a visit in the past' });
+        }
+
         const visit = await Visit.create({
             Patient_ID,
             Doctor_ID,
@@ -69,14 +77,25 @@ const createVisit = async (req, res) => {
 const UpdateVisit = async (req, res) => {
     try {
         const { Patient_ID, Doctor_ID, date_of_visit, condition, diagnosis, therapy } = req.body;
+
+        // Validation: Ensure the date of visit is not in the past
+        const currentDate = new Date();
+        const visitDate = new Date(date_of_visit);
+
+        if (visitDate < currentDate.setHours(0, 0, 0, 0)) { // Sets current date to midnight (to compare only date)
+            return res.status(400).json({ error: 'Cannot update to a date in the past' });
+        }
+
         const updated = await Visit.update(
             { Patient_ID, Doctor_ID, date_of_visit, condition, diagnosis, therapy },
             { where: { Visit_ID: req.params.id } }
         );
+
         if (updated[0] === 0) {
             res.status(404).json({ error: 'Visit not found or not updated' });
             return;
         }
+
         res.json({ success: true, message: 'Visit updated successfully' });
     } catch (error) {
         console.error('Error updating visit:', error);

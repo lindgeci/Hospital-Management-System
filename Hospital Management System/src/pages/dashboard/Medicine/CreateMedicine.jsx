@@ -124,68 +124,73 @@ function CreateMedicine({ onClose }) {
 
     return (
         <Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
-    <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
-        {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
-        <Typography variant="h6" component="h1" gutterBottom>Add Medicine</Typography>
-        <Box mb={2}>
-            <TextField
-                fullWidth
-                select
-                label="Medicine Name"
-                variant="outlined"
-                id="M_name"
-                name="M_name"
-                value={formData.M_name}
-                onChange={handleChange}
-            >
-                <MenuItem value='' disabled>Select Medicine</MenuItem>
-                {Object.keys(medicineCosts).map(medicine => (
-                    <MenuItem key={medicine} value={medicine}>{medicine}</MenuItem>
-                ))}
-            </TextField>
-            <FormHelperText>Select the medicine you want to add</FormHelperText>
+        <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>
+            {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
+            <Typography variant="h6" component="h1" gutterBottom>Add Medicine</Typography>
+            
+            <Box mb={1}>
+                <TextField
+                    fullWidth
+                    select
+                    label="Medicine Name"
+                    variant="outlined"
+                    id="M_name"
+                    name="M_name"
+                    value={formData.M_name}
+                    onChange={handleChange}
+                >
+                    <MenuItem value='' disabled>Select Medicine</MenuItem>
+                    {Object.keys(medicineCosts).map(medicine => (
+                        <MenuItem key={medicine} value={medicine}>{medicine}</MenuItem>
+                    ))}
+                </TextField>
+                <FormHelperText>Select the medicine you want to add</FormHelperText>
+            </Box>
+            
+            <Box mb={1}>
+                <TextField
+                    fullWidth
+                    select
+                    label="Quantity"
+                    variant="outlined"
+                    id="M_Quantity"
+                    name="M_Quantity"
+                    value={formData.M_Quantity}
+                    onChange={handleChange}
+                >
+                    {[...Array(10)].map((_, index) => (
+                        <MenuItem key={index + 1} value={index + 1}>
+                            {index + 1}
+                        </MenuItem>
+                    ))}
+                </TextField>
+                <FormHelperText>Select the quantity of the medicine</FormHelperText>
+            </Box>
+    
+            <Box mb={1}>
+                <TextField
+                    fullWidth
+                    label="Cost"
+                    variant="outlined"
+                    id="M_Cost"
+                    name="M_Cost"
+                    type="text"
+                    value={formData.M_Cost}
+                    readOnly
+                    InputProps={{
+                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    }}
+                />
+                <FormHelperText>This cost is calculated based on selected medicine and quantity</FormHelperText>
+            </Box>
+    
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+                <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>
+                <Button variant="outlined" onClick={onClose}>Cancel</Button>
+            </Box>
         </Box>
-        <Box mb={2}>
-            <TextField
-                fullWidth
-                select
-                label="Quantity"
-                variant="outlined"
-                id="M_Quantity"
-                name="M_Quantity"
-                value={formData.M_Quantity}
-                onChange={handleChange}
-            >
-                {[...Array(10)].map((_, index) => (
-                    <MenuItem key={index + 1} value={index + 1}>
-                        {index + 1}
-                    </MenuItem>
-                ))}
-            </TextField>
-            <FormHelperText>Select the quantity of the medicine</FormHelperText>
-        </Box>
-        <Box mb={2}>
-            <TextField
-                fullWidth
-                label="Cost"
-                variant="outlined"
-                id="M_Cost"
-                name="M_Cost"
-                type="text"
-                value={formData.M_Cost}
-                readOnly
-                InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                }}
-            />
-            <FormHelperText>This cost is calculated based on selected medicine and quantity</FormHelperText>
-        </Box>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>
-            <Button variant="outlined" onClick={onClose}>Cancel</Button>
-        </Box>
-    </Box>
-</Modal>
+    </Modal>
+    
     );
 }
 
