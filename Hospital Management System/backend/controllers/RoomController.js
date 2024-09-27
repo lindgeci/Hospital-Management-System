@@ -1,4 +1,5 @@
 const Room = require('../models/Room');
+const { Op } = require('sequelize');
 
 const FindAllRooms = async (req, res) => {
     try {
@@ -23,7 +24,6 @@ const FindSingleRoom = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
 const AddRoom = async (req, res) => {
     try {
         const { Room_type, Patient_ID, Room_cost } = req.body;
@@ -31,6 +31,12 @@ const AddRoom = async (req, res) => {
         // Validate required fields
         if (!Room_type || !Patient_ID || Room_cost === undefined) {
             return res.status(400).json({ error: 'All fields (Room_type, Patient_ID, Room_cost) are required' });
+        }
+
+        // Check if the patient already has a room
+        const existingRoom = await Room.findOne({ where: { Patient_ID } });
+        if (existingRoom) {
+            return res.status(400).json({ error: 'This patient already has a room assigned.' });
         }
 
         const newRoom = await Room.create({
@@ -44,6 +50,7 @@ const AddRoom = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 const UpdateRoom = async (req, res) => {
     try {
         const { Room_type, Patient_ID, Room_cost } = req.body;
@@ -51,6 +58,12 @@ const UpdateRoom = async (req, res) => {
         // Validate required fields
         if (!Room_type || !Patient_ID || Room_cost === undefined) {
             return res.status(400).json({ error: 'All fields (Room_type, Patient_ID, Room_cost) are required' });
+        }
+
+        // Check if the patient already has a room assigned (for updating)
+        const existingRoom = await Room.findOne({ where: { Patient_ID, Room_ID: { [Op.ne]: req.params.id } } });
+        if (existingRoom) {
+            return res.status(400).json({ error: 'This patient already has a room assigned. Update the existing room instead.' });
         }
 
         const updated = await Room.update(
@@ -67,6 +80,7 @@ const UpdateRoom = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 
 const DeleteRoom = async (req, res) => {

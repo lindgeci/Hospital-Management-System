@@ -9,6 +9,28 @@ const FindAllPatients = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+const Room = require('../models/Room');
+
+const FindRoomCostByPatientId = async (req, res) => {
+    try {
+        const { patientId } = req.params;
+
+        // Fetch the room associated with the patient
+        const room = await Room.findOne({
+            where: { Patient_ID: patientId }
+        });
+
+        if (!room) {
+            return res.status(404).json({ error: 'Room not found for this patient' });
+        }
+
+        // Return the room cost
+        res.json({ Room_Cost: room.Room_cost });
+    } catch (error) {
+        console.error('Error fetching room cost:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
 
 const FindSinglepatientPatient = async (req, res) => {
     try {
@@ -172,5 +194,6 @@ module.exports = {
     UpdatePatient,
     DeletePatient,
     CheckPatientExistence,
-    FindPatientByPersonalNumber
+    FindPatientByPersonalNumber,
+    FindRoomCostByPatientId
 };

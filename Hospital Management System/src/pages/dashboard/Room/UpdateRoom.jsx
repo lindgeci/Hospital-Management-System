@@ -93,12 +93,29 @@ function UpdateRoom({ id, onClose }) {
 
     const handleUpdateRoom = async () => {
         const { Room_type, Patient_ID, Room_cost } = formData;
-
-        if (Room_type === '' || Patient_ID === '' || Room_cost === '') {
-            showAlert('All fields are required');
+    
+        // Validation logic
+        if (!Room_type.trim()) {
+            showAlert('Room type is required.');
             return;
         }
-
+    
+        if (!Patient_ID || parseInt(Patient_ID) < 1) {
+            showAlert("Patient ID must be a positive number.");
+            return;
+        }
+    
+        if (!Room_cost) {
+            showAlert('Room cost is required.');
+            return;
+        }
+    
+        if (!isValidDecimal(Room_cost)) {
+            showAlert('Room cost must be a valid decimal (10.2).');
+            return;
+        }
+    
+        // Check if data has changed
         if (
             Room_type === originalData.Room_type &&
             parseInt(Patient_ID) === parseInt(originalData.Patient_ID) &&
@@ -107,37 +124,33 @@ function UpdateRoom({ id, onClose }) {
             showAlert("Data must be changed before updating.");
             return;
         }
-
-        if (parseInt(Patient_ID) < 1) {
-            showAlert("Patient ID must be at least 1.");
-            return;
-        }
-
-        if (!isValidDecimal(Room_cost)) {
-            showAlert('Cost must be a valid decimal (10.2)');
-            return;
-        }
-
+    
         try {
+            // Check if the patient is valid
             await axios.get(`http://localhost:9004/api/patient/check/${Patient_ID}`, {
-                headers: { 'Authorization': `Bearer ${token}` },
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-
+    
+            // Update the room
             await axios.put(`http://localhost:9004/api/room/update/${id}`, formData, {
-                headers: { 'Authorization': `Bearer ${token}` },
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-
+    
             navigate('/dashboard/room');
             window.location.reload();
         } catch (error) {
-            const message = error.response?.status === 401
-                ? 'Invalid or expired authentication token. Please log in again.'
-                : 'Error updating room.';
-            setAlertMessage(message);
-            setShowErrorModal(true);
+            // Handle error and display appropriate message
+            if (error.response && error.response.data && error.response.data.error) {
+                showAlert(error.response.data.error);
+            } else {
+                const message = error.response?.status === 401
+                    ? 'Invalid or expired authentication token. Please log in again.'
+                    : 'Error updating room. Please try again later.';
+                showAlert(message);
+            }
         }
     };
-
+    
     const isValidDecimal = (value) => /^\d{0,8}(\.\d{1,2})?$/.test(value);
 
     const showAlert = (message) => {

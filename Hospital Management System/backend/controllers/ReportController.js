@@ -17,17 +17,20 @@ const transporter = nodemailer.createTransport({
         pass: process.env.GMAIL_PASS,
     },
 });
-
 const createPdf = async (req, res) => {
+    console.log('Request Body:', req.body); // Add this line
     try {
         const {
             personalNumber, patientName, age, patientGender, bloodType, diagnosis,
-            doctorName, email, phone, condition, therapy, dateOfVisit
+            doctorName, email, phone, condition, therapy, dateOfVisit, roomCost // Include roomCost
         } = req.body;
+
+        // Print the entire roomCost value
+        console.log('Room Cost:', roomCost); // Print roomCost here
 
         const htmlContent = pdfTemplate({
             personalNumber, patientName, age, patientGender, bloodType, diagnosis,
-            doctorName, email, phone, condition, therapy, dateOfVisit
+            doctorName, email, phone, condition, therapy, dateOfVisit, roomCost // Pass roomCost to template
         });
 
         const document = {
@@ -57,7 +60,10 @@ const createPdf = async (req, res) => {
 
 const sendEmailWithPdf = async (req, res) => {
     try {
-        const { email, patientName } = req.body;
+        const { email, patientName, roomCost } = req.body; // Include roomCost
+
+        // Print the entire roomCost value
+        console.log('Room Cost (Email):', roomCost); // Print roomCost here
 
         if (!fs.existsSync(outputFilePath)) {
             throw new Error('PDF file not found');
@@ -70,6 +76,8 @@ const sendEmailWithPdf = async (req, res) => {
             text: `Dear ${patientName},
 
             Please find the attached patient report for your recent hospital visit.
+
+            Room Cost: ${roomCost} // Include roomCost in the email body
 
             If you have any questions or need further assistance, please do not hesitate to contact us.
 
@@ -110,17 +118,19 @@ const fetchPdf = (req, res) => {
         res.status(404).send('PDF not found');
     }
 };
-
 const saveReportToDB = async (req, res) => {
+    console.log('Received roomCost:', req.body.roomCost);
     try {
         console.log('Request files:', req.files);
         console.log('Request body:', req.body);
 
         let personalNumber = req.body.personalNumber;
         let patientId = req.body.Patient_ID;
+        let roomCost = req.body.roomCost; // Include roomCost
 
         console.log('Received personalNumber:', personalNumber);
         console.log('Received Patient_ID:', patientId);
+        console.log('Received roomCost:', roomCost); // Log roomCost
 
         // Ensure personalNumber is a string
         if (typeof personalNumber === 'number') {
@@ -150,7 +160,8 @@ const saveReportToDB = async (req, res) => {
         const pdfReport = await PdfReport.create({
             personal_number: personalNumber,
             report: pdfReportData,
-            Patient_ID: patientId
+            Patient_ID: patientId,
+            room_cost: roomCost // Save roomCost in the database
         });
 
         res.status(200).json({ message: 'Report saved to database successfully', pdfReport });
@@ -159,7 +170,6 @@ const saveReportToDB = async (req, res) => {
         res.status(500).json({ error: 'Error saving report to database', message: error.message });
     }
 };
-
 
 const fetchReportsFromDB = async (req, res) => {
     try {

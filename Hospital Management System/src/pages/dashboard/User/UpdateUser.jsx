@@ -9,7 +9,7 @@ function UpdateUser({ id, onClose }) {
     const [formData, setFormData] = useState({
         email: '',
         username: '',
-        role: '' // Add role field
+        role: ''
     });
     const [alertMessage, setAlertMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
@@ -30,7 +30,7 @@ function UpdateUser({ id, onClose }) {
                 setFormData({
                     email: data.email,
                     username: data.username,
-                    role: data.UserRoles && data.UserRoles.length > 0 ? data.UserRoles[0].Role.role_name : '' // Handle case where UserRoles might be undefined or empty
+                    role: data.UserRoles && data.UserRoles.length > 0 ? data.UserRoles[0].Role.role_name : ''
                 });
             } catch (error) {
                 console.error('Error fetching user:', error);
@@ -106,6 +106,12 @@ function UpdateUser({ id, onClose }) {
             return;
         }
 
+        const existingUserByUsername1 = users.find(user => user.email === email && user.user_id !== id);
+        if (existingUserByUsername1) {
+            showAlert('User with the same email already exists');
+            return;
+        }
+
         try {
             await axios.put(`http://localhost:9004/api/users/update/${id}`, formData, {
                 headers: {
@@ -129,7 +135,7 @@ function UpdateUser({ id, onClose }) {
                 <Typography variant="h6" component="h1" gutterBottom>Update User</Typography>
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Email"
                     variant="outlined"
                     id="email"
@@ -137,10 +143,11 @@ function UpdateUser({ id, onClose }) {
                     placeholder="Enter Email"
                     value={formData.email}
                     onChange={handleChange}
+                    helperText="Please enter a valid email address."
                 />
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Username"
                     variant="outlined"
                     id="username"
@@ -148,8 +155,9 @@ function UpdateUser({ id, onClose }) {
                     placeholder="Enter Username"
                     value={formData.username}
                     onChange={handleChange}
+                    helperText="Username must be at least 3 characters long."
                 />
-                <FormControl fullWidth margin="normal">
+                <FormControl fullWidth margin="dense">
                     <InputLabel id="role-label">Role</InputLabel>
                     <Select
                         labelId="role-label"
@@ -163,6 +171,9 @@ function UpdateUser({ id, onClose }) {
                         <MenuItem value="doctor">Doctor</MenuItem>
                         <MenuItem value="admin">Admin</MenuItem>
                     </Select>
+                    <Typography variant="caption" display="block" gutterBottom>
+                        Select the user role from the list.
+                    </Typography>
                 </FormControl>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleUpdateUser} sx={{ mr: 1 }}>Submit</Button>
@@ -174,4 +185,3 @@ function UpdateUser({ id, onClose }) {
 }
 
 export default UpdateUser;
-    

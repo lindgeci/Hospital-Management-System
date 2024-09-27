@@ -1,7 +1,7 @@
 import React, { useState, useEffect, lazy, Suspense } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Box, TextField, Button, Typography, Modal, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Box, TextField, Button, Typography, Modal, FormControl, InputLabel, Select, MenuItem, FormHelperText } from '@mui/material';
 import Cookies from 'js-cookie';
 
 const ErrorModal = lazy(() => import('../../../components/ErrorModal'));
@@ -107,6 +107,13 @@ function CreateUser({ onClose }) {
             return;
         }
 
+        
+        const existingUserByemail = users.find(user => user.email === email);
+        if (existingUserByemail) {
+            showAlert('User with the same email already exists');
+            return;
+        }
+
         handleAddUser();
     };
 
@@ -122,9 +129,11 @@ function CreateUser({ onClose }) {
                     {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
                 </Suspense>
                 <Typography variant="h6" component="h1" gutterBottom>Add User</Typography>
+
+                {/* Email Field */}
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Email"
                     variant="outlined"
                     id="email"
@@ -133,9 +142,12 @@ function CreateUser({ onClose }) {
                     value={formData.email}
                     onChange={handleChange}
                 />
+                <FormHelperText>Enter a valid email address (e.g., example@domain.com).</FormHelperText>
+
+                {/* Username Field */}
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Username"
                     variant="outlined"
                     id="username"
@@ -144,9 +156,12 @@ function CreateUser({ onClose }) {
                     value={formData.username}
                     onChange={handleChange}
                 />
+                <FormHelperText>Username must be at least 3 characters long.</FormHelperText>
+
+                {/* Password Field */}
                 <TextField
                     fullWidth
-                    margin="normal"
+                    margin="dense"
                     label="Password"
                     variant="outlined"
                     type="password"
@@ -156,7 +171,10 @@ function CreateUser({ onClose }) {
                     value={formData.password}
                     onChange={handleChange}
                 />
-                <FormControl fullWidth margin="normal">
+                <FormHelperText>Password must be at least 6 characters long.</FormHelperText>
+
+                {/* Role Field */}
+                <FormControl fullWidth margin="dense">
                     <InputLabel id="role-label">Role</InputLabel>
                     <Select
                         labelId="role-label"
@@ -170,7 +188,10 @@ function CreateUser({ onClose }) {
                         <MenuItem value="doctor">Doctor</MenuItem>
                         <MenuItem value="admin">Admin</MenuItem>
                     </Select>
+                    <FormHelperText>Select the role for the new user.</FormHelperText>
                 </FormControl>
+
+                {/* Buttons */}
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleValidation} sx={{ mr: 1 }}>Submit</Button>
                     <Button variant="outlined" onClick={onClose}>Cancel</Button>

@@ -19,14 +19,17 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
     phone: '',
     condition: '',
     therapy: '',
-    dateOfVisit: ''
+    dateOfVisit: '',
+    roomCost: ''  // New attribute for room cost
   });
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState('');
   const [modalMessage, setModalMessage] = useState('');
   const [showModal, setShowModal] = useState(false);
   const token = Cookies.get('token');
-
+//   useEffect(() => {
+//     console.log('formData updated:', formData);
+// }, [formData]);
   useEffect(() => {
     const fetchPatients = async () => {
       try {
@@ -43,7 +46,28 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
 
     fetchPatients();
   }, [token]);
+  
+  const fetchRoomCost = async (patientId) => {
+    try {
+        const response = await axios.get(`http://localhost:9004/api/patient/${patientId}/room-cost`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        console.log('Room cost response:', response.data); // This should log { Room_Cost: '50.00' }
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            roomCost: response.data.Room_Cost  // Correctly access Room_Cost
+        }));
+    } catch (error) {
+        console.error('Error fetching room cost:', error);
+        setModalMessage('Error fetching room cost.');
+        setShowModal(true);
+    }
+};
 
+
+// console.log(fetchRoomCost)
   useEffect(() => {
     const fetchPatientVisits = async () => {
       if (!selectedPatient) {
@@ -59,7 +83,8 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
           phone: '',
           condition: '',
           therapy: '',
-          dateOfVisit: ''
+          dateOfVisit: '',
+          roomCost: ''  // Reset room cost
         });
         return;
       }
@@ -85,7 +110,8 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
             phone: '',
             condition: '',
             therapy: '',
-            dateOfVisit: ''
+            dateOfVisit: '',
+            roomCost: ''  // Reset room cost
           });
           setModalMessage('No visits found for this patient.');
           setShowModal(true);
@@ -108,8 +134,13 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
           phone: patient.Phone,
           condition: visit.condition,
           therapy: visit.therapy,
-          dateOfVisit: visit.date_of_visit
+          dateOfVisit: visit.date_of_visit,
+          roomCost: ''  // Initialize room cost
         });
+
+        // Fetch room cost for the selected patient
+        await fetchRoomCost(selectedPatient);
+        // console.log('Updated formData:', formData);
       } catch (error) {
         console.error('Error fetching visit data:', error);
         setModalMessage('Error fetching visit data.');
@@ -119,6 +150,7 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
 
     fetchPatientVisits();
   }, [selectedPatient, token]);
+
 
   const calculateAge = birthDate => {
     const today = new Date();
@@ -141,7 +173,8 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
       !formData.diagnosis ||
       !formData.doctorName ||
       !formData.email ||
-      !formData.phone
+      !formData.phone 
+      // !formData.roomCost  // Validate room cost
     ) {
       setModalMessage('Please fill in all fields before creating PDF.');
       setShowModal(true);
@@ -183,7 +216,8 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
       !formData.diagnosis ||
       !formData.doctorName ||
       !formData.email ||
-      !formData.phone
+      !formData.phone 
+      // !formData.roomCost  // Validate room cost
     ) {
       setModalMessage('Please fill in all fields before sending email.');
       setShowModal(true);
@@ -215,67 +249,66 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
 
   const createPdfAndSaveToDb = async () => {
     if (
-        !formData.personalNumber ||
-        !formData.patientName ||
-        !formData.age ||
-        !formData.patientGender ||
-        !formData.bloodType ||
-        !formData.diagnosis ||
-        !formData.doctorName ||
-        !formData.email ||
-        !formData.phone
+      !formData.personalNumber ||
+      !formData.patientName ||
+      !formData.age ||
+      !formData.patientGender ||
+      !formData.bloodType ||
+      !formData.diagnosis ||
+      !formData.doctorName ||
+      !formData.email ||
+      !formData.phone 
+      // !formData.roomCost  // Validate room cost
     ) {
-        setModalMessage('Please fill in all fields before saving report.');
-        setShowModal(true);
-        return;
+      setModalMessage('Please fill in all fields before saving report.');
+      setShowModal(true);
+      return;
     }
     try {
-        const pdfResponse = await axios.post(
-            'http://localhost:9004/api/report/create-pdf',
-            {
-                ...formData
-            },
-            {
-                responseType: 'blob',
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            }
-        );
-
-        const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
-        const formDataWithPdf = new FormData();
-        formDataWithPdf.append('personal_number', formData.personalNumber);
-        formDataWithPdf.append('report', blob, `${formData.personalNumber}_Report.pdf`);
-        formDataWithPdf.append('Patient_ID', selectedPatient); // Add this line
-
-        for (const key in formData) {
-            formDataWithPdf.append(key, formData[key]);
+      const pdfResponse = await axios.post(
+        'http://localhost:9004/api/report/create-pdf',
+        {
+          ...formData
+        },
+        {
+          responseType: 'blob',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
+      );
 
-        await axios.post('http://localhost:9004/api/report/save-report-to-db', formDataWithPdf, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                Authorization: `Bearer ${token}`
-            }
-        });
+      const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
+      const formDataWithPdf = new FormData();
+      formDataWithPdf.append('personal_number', formData.personalNumber);
+      formDataWithPdf.append('report', blob, `${formData.personalNumber}_Report.pdf`);
+      formDataWithPdf.append('Patient_ID', selectedPatient); // Add this line
 
-        setModalMessage('PDF report saved to database successfully.');
-        setShowModal(true);
-        onSaveSuccess(); // Notify the parent component to refresh the reports
+      for (const key in formData) {
+        formDataWithPdf.append(key, formData[key]);
+      }
+
+      await axios.post('http://localhost:9004/api/report/save-report-to-db', formDataWithPdf, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      setModalMessage('PDF report saved to database successfully.');
+      setShowModal(true);
+      onSaveSuccess(); // Notify the parent component to refresh the reports
     } catch (error) {
-        setModalMessage('Error creating PDF or saving report to database.');
-        setShowModal(true);
-        console.error('Error:', error);
+      setModalMessage('Error creating PDF or saving report to database.');
+      setShowModal(true);
+      console.error('Error:', error);
     }
-};
-
+  };
 
   const closeModal = () => {
     setShowModal(false);
     setModalMessage('');
   };
-
   return (
     <Box className="report-container" p={6} maxWidth="md" mx="auto" bgcolor="white" borderRadius={2} boxShadow={2}>
       <Box display="flex" justifyContent="flex-start" mb={2}>

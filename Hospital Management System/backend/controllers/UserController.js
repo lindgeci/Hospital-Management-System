@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const UserRole = require('../models/UserRole');
 const Role = require('../models/Role');
+const { Op } = require('sequelize');
 
 
 const saltRounds = 10;
@@ -113,6 +114,12 @@ const AddUser = async (req, res) => {
             console.error('Validation error: User with the same username already exists');
             return res.status(400).json({ error: 'User with the same username already exists' });
         }
+                // Check if the user already exists
+        const existingUser1 = await User.findOne({ where: { email } });
+        if (existingUser1) {
+            console.error('Validation error: User with the same email already exists');
+            return res.status(400).json({ error: 'User with the same email already exists' });
+        }
 
         // Hash the password before storing it in the database
         const hashedPassword = await bcrypt.hash(password, saltRounds);
@@ -142,7 +149,6 @@ const AddUser = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
 const UpdateUser = async (req, res) => {
     try {
         const { email, username, password, role } = req.body;
@@ -163,10 +169,22 @@ const UpdateUser = async (req, res) => {
             return res.status(400).json({ error: 'Username must be at least 3 characters long' });
         }
 
-        // Check if the user already exists
+        // Check if the user exists
         const existingUser = await User.findOne({ where: { user_id: req.params.id } });
         if (!existingUser) {
             return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Check if the email is already taken by another user
+        const existingEmail = await User.findOne({ where: { email, user_id: { [Op.ne]: req.params.id } } });
+        if (existingEmail) {
+            return res.status(400).json({ error: 'User with the same email already exists' });
+        }
+
+        // Check if the username is already taken by another user
+        const existingUsername = await User.findOne({ where: { username, user_id: { [Op.ne]: req.params.id } } });
+        if (existingUsername) {
+            return res.status(400).json({ error: 'User with the same username already exists' });
         }
 
         // Update user details
@@ -193,6 +211,7 @@ const UpdateUser = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 
 const DeleteUser = async (req, res) => {

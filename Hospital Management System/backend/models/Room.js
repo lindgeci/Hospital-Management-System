@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
+const Patient = require('./Patient');
 
 const Room = sequelize.define('Room', {
 Room_ID: {
@@ -27,5 +28,5 @@ Room_ID: {
   tableName: 'room',
   timestamps: false,
 });
-
+Room.belongsTo(Patient, {foreignKey: 'Patient_ID'});
 module.exports = Room;

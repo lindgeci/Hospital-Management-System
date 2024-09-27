@@ -87,10 +87,9 @@ function CreateRoom({ onClose }) {
             setShowErrorModal(true);
         }
     };
-
     const handleValidation = async () => {
         const { Room_type, Patient_ID } = formData;
-
+    
         if (Room_type === '' || Patient_ID === '' || roomCost === '') {
             showAlert('All fields are required');
             return;
@@ -99,20 +98,33 @@ function CreateRoom({ onClose }) {
             showAlert('Patient ID cannot be less than 1');
             return;
         }
-
+    
         try {
+            // Check if patient exists
             await axios.get(`http://localhost:9004/api/patient/check/${Patient_ID}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+    
+            // Call the backend to add the room and trigger backend validation
+            const completeFormData = { ...formData, Room_cost: roomCost };
+            const response = await axios.post('http://localhost:9004/api/room/create', completeFormData, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+    
+            if (response.data.success) {
+                navigate('/dashboard/room');
+                window.location.reload();
+            }
         } catch (error) {
-            console.error('Error checking patient ID:', error);
-            showAlert('Patient ID does not exist');
-            return;
+            if (error.response && error.response.data && error.response.data.error) {
+                showAlert(error.response.data.error); // Display backend validation error
+            } else {
+                console.error('Error adding room:', error);
+                showAlert('Error adding room. Please try again.');
+            }
         }
-
-        handleAddRoom();
     };
-
+    
     const showAlert = (message) => {
         setAlertMessage(message);
         setShowErrorModal(true);
