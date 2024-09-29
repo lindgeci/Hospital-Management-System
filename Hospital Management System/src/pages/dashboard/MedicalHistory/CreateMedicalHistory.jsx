@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Button, Typography, Select, MenuItem, InputLabel, FormHelperText, FormControl, Modal, TextField } from '@mui/material';
 import ErrorModal from '../../../components/ErrorModal';
 import Cookies from 'js-cookie';
@@ -17,10 +17,18 @@ function CreateMedicalHistory({ onClose }) {
     const [showErrorModal, setShowErrorModal] = useState(false);
     const token = Cookies.get('token');
     const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
         fetchPatients();
-    }, []);
+        
+        // Get the patient ID from the URL location state
+        const { patientId } = location.state || {};
+        if (patientId) {
+            setFormData((prev) => ({ ...prev, Patient_ID: patientId }));
+            fetchPatientPhone(patientId);
+        }
+    }, [location.state]); // Re-run effect when location.state changes
 
     const fetchPatients = async () => {
         try {

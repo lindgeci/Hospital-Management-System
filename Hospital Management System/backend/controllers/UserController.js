@@ -3,19 +3,62 @@ const User = require('../models/User');
 const UserRole = require('../models/UserRole');
 const Role = require('../models/Role');
 const { Op } = require('sequelize');
+const Patient = require('../models/Patient');
+const getPatientByEmail = async (email) => {
+    try {
+        const patient = await Patient.findOne({
+            where: { Email: email }
+        });
 
+        if (!patient) {
+            throw new Error('Patient not found');
+        }
 
+        return patient;
+    } catch (error) {
+        console.error('Error fetching patient by email:', error);
+        throw error;
+    }
+};
 const saltRounds = 10;
 
 const FindAllUsers = async (req, res) => {
     try {
-        const users = await User.findAll();
-        res.json(users);
+        const userEmail = req.user.email;
+        const userRole = req.user.role;
+
+        let users;
+        if (userRole === 'admin') {
+            // Admin can fetch all users
+            users = await User.findAll();
+        } else if (userRole === 'patient') {
+            // Fetch the patient by email
+            const patient = await getPatientByEmail(userEmail);
+            if (!patient) {
+                return res.status(404).json({ error: 'Patient not found' });
+            }
+            // Patients can fetch only their own information
+            users = await User.findAll({
+                where: { email: userEmail },
+            });
+        } else {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        // Format the response to include additional data
+        const usersDataWithNames = users.map(user => ({
+            ...user.toJSON(),
+            FullName: `${user.firstName} ${user.lastName}` || 'Unknown User'
+        }));
+
+        res.json(usersDataWithNames);
     } catch (error) {
-        console.error('Error fetching all users:', error);
+        console.error('Error fetching users:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+
 
 const getUsersWithRoles = async (req, res) => {
     try {

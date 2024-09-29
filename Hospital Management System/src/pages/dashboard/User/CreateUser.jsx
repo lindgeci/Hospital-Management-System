@@ -100,7 +100,11 @@ function CreateUser({ onClose }) {
             showAlert('Password must be at least 6 characters long');
             return;
         }
-
+        const validateName = (name) => /^[A-Za-z]+$/.test(name);
+        if (!validateName(username)) {
+            showAlert('Username can only contain letters.');
+            return;
+        }
         const existingUserByUsername = users.find(user => user.username === username);
         if (existingUserByUsername) {
             showAlert('User with the same username already exists');

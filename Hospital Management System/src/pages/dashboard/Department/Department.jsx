@@ -65,7 +65,7 @@ function Department({
         {
             field: 'update',
             headerName: 'Update',
-            width: 130,
+            flex: 1,
             renderCell: (params) => (
                 <Button
                     variant="contained"
@@ -79,7 +79,7 @@ function Department({
         {
             field: 'delete',
             headerName: 'Delete',
-            width: 130,
+            flex: 1,
             renderCell: (params) => (
                 <Button
                     variant="contained"
@@ -127,7 +127,6 @@ function Department({
                         onClick={handleCreateFormToggle}
                         startIcon={<Add />}
                     >
-                        Add Department
                     </Button>
                 )}
             </Box>

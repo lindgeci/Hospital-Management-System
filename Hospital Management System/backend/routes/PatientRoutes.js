@@ -9,7 +9,10 @@ const {
     DeletePatient,
     CheckPatientExistence, 
     FindPatientByPersonalNumber,
-    FindRoomCostByPatientId // Import the new function
+    FindRoomCostByPatientId, // Import the new function,
+    FindMedicineCostByPatientId,
+    FindEmailByPatientId,
+    CheckPatientVisit
 } = require("../controllers/PatientController");
 
 // Define the routes
@@ -23,5 +26,7 @@ router.get('/patient/personalNumber/:personalNumber', authenticateToken(['admin'
 
 // New route to get room cost by patient ID
 router.get('/patient/:patientId/room-cost', authenticateToken(['admin', 'doctor', 'patient']), FindRoomCostByPatientId);
-
+router.get('/patients/:patientId/medicine-cost', authenticateToken(['admin', 'doctor', 'patient']),FindMedicineCostByPatientId); // Add this line
+router.get('/patient/:patientId/email', authenticateToken(['admin', 'doctor', 'patient']),FindEmailByPatientId);
+router.get('/patient/:id/visit', authenticateToken(['admin', 'doctor', 'patient']), CheckPatientVisit);
 module.exports = router;

@@ -14,7 +14,7 @@ function CreateEmergencyContact({ onClose }) {
     });
     const [patients, setPatients] = useState([]);
     const [emergencyContacts, setEmergencyContacts] = useState([]);
-    const [patientPhone, setPatientPhone] = useState(''); // New state for the patient's phone
+    const [patientPhone, setPatientPhone] = useState(''); // State for the patient's phone
     const [alertMessage, setAlertMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const token = Cookies.get('token'); 
@@ -164,7 +164,6 @@ function CreateEmergencyContact({ onClose }) {
         setAlertMessage(message);
         setShowErrorModal(true);
     };
-
     return (
         <Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
             <Box sx={{ bgcolor: 'background.paper', p: 4, borderRadius: 2, width: 400, mx: 'auto' }}>

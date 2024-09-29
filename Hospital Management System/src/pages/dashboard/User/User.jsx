@@ -5,7 +5,7 @@ import CreateUser from './CreateUser';
 import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 import { Add, Delete, Edit } from '@mui/icons-material';
 import Cookies from 'js-cookie'; // Import js-cookie
-
+import {jwtDecode}from 'jwt-decode';
 function User({
     showCreateForm,
     setShowCreateForm,
@@ -16,19 +16,57 @@ function User({
     const [users, setUsers] = useState([]);
     const [deleteUserId, setDeleteUserId] = useState(null);
     const token = Cookies.get('token'); 
+    const [userRole, setUserRole] = useState('');
 
     useEffect(() => {
-        axios
-            .get('http://localhost:9004/api/users', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            })
-            .then((res) => {
-                setUsers(res.data);
-            })
-            .catch((err) => console.log(err));
+        const fetchUserRole = async () => {
+            try {
+                const decodedToken = jwtDecode(token);
+                const userEmail = decodedToken.email;
+    
+                const userResponse = await axios.get('http://localhost:9004/api/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const currentUser = userResponse.data.find(user => user.email === userEmail);
+                const role = currentUser.role;
+                setUserRole(role);
+            } catch (err) {
+                console.error('Error fetching user role:', err.response ? err.response.data : err.message);
+            }
+        };
+    
+        fetchUserRole();
     }, [token]);
+    
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const decodedToken = jwtDecode(token);
+                const userEmail = decodedToken.email;
+    
+                const userResponse = await axios.get('http://localhost:9004/api/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+    
+                if (userRole === 'admin') {
+                    // If the user is an admin, set all users
+                    setUsers(userResponse.data);
+                } else {
+                    // If not an admin, set only the current user
+                    const currentUser = userResponse.data.find(user => user.email === userEmail);
+                    setUsers([currentUser]);
+                }
+            } catch (err) {
+                console.error('Error fetching users:', err.response ? err.response.data : err.message);
+            }
+        };
+    
+        if (userRole) {
+            fetchUsers();
+        }
+    }, [token, userRole]); // Adding `userRole` as a dependency
+    
+    
 
     const handleUpdateButtonClick = (userId) => {
         setSelectedUserId(userId);
@@ -88,6 +126,7 @@ function User({
                 </Button>
             ),
         },
+        ...(userRole == 'admin' ? [
         {
             field: 'delete',
             headerName: 'Delete',
@@ -102,6 +141,7 @@ function User({
                 </Button>
             ),
         }
+    ] : [])
     ];
 
     return (
@@ -132,14 +172,13 @@ function User({
                 <Typography variant="h6" style={{ marginRight: 'auto' }}>
                     Users
                 </Typography>
-                {showCreateForm ? null : (
+                {userRole == 'admin' && !showCreateForm && (
                     <Button
                         variant="contained"
                         color="primary"
                         onClick={handleCreateFormToggle}
                         startIcon={<Add />}
                     >
-                        Add User
                     </Button>
                 )}
             </Box>

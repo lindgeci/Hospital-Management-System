@@ -20,16 +20,16 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
     condition: '',
     therapy: '',
     dateOfVisit: '',
-    roomCost: ''  // New attribute for room cost
+    roomCost: '',
+    medicineCost: ''  // New attribute for medicine cost
   });
+  
   const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState('');
   const [modalMessage, setModalMessage] = useState('');
   const [showModal, setShowModal] = useState(false);
   const token = Cookies.get('token');
-//   useEffect(() => {
-//     console.log('formData updated:', formData);
-// }, [formData]);
+
   useEffect(() => {
     const fetchPatients = async () => {
       try {
@@ -49,107 +49,178 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
   
   const fetchRoomCost = async (patientId) => {
     try {
-        const response = await axios.get(`http://localhost:9004/api/patient/${patientId}/room-cost`, {
+      const response = await axios.get(`http://localhost:9004/api/patient/${patientId}/room-cost`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setFormData(prevFormData => ({
+        ...prevFormData,
+        roomCost: response.data.Room_Cost
+      }));
+    } catch (error) {
+      console.error('Error fetching room cost:', error);
+      setModalMessage('Please assign a room to the patient before creating the report.');
+      setShowModal(true);
+    }
+  };
+
+  const fetchMedicineCost = async (patientId) => {  // Function to fetch medicine cost
+    // console.log('Fetching medicine cost for patient ID:', patientId); // Log the patient ID
+    try {
+      const response = await axios.get(`http://localhost:9004/api/patients/${patientId}/medicine-cost`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+  
+      // Check if costs array is present in the response
+      if (response.data && Array.isArray(response.data.costs) && response.data.costs.length > 0) {
+        const medicineCost = response.data.costs[0]; // Assuming the first cost is the relevant one
+        setFormData(prevFormData => ({
+          ...prevFormData,
+          medicineCost: medicineCost // Update the medicine cost in form data
+        }));
+        // console.log('Medicine cost fetched:', medicineCost); // Log the fetched medicine cost
+      } else {
+        console.warn('Medicine cost not found in response:', response.data); // Warn if costs array is empty
+        setModalMessage('Medicine cost not found.');
+        setShowModal(true);
+      }
+    } catch (error) {
+      console.error('Error fetching medicine cost:', error);
+      setModalMessage('Please assign medicine to the patient before creating the report.');
+      setShowModal(true);
+    }
+  };
+  
+  
+  const checkExistingReport = async (patientId) => {
+    try {
+        const response = await axios.get(`http://localhost:9004/api/reports/check/${patientId}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
-        console.log('Room cost response:', response.data); // This should log { Room_Cost: '50.00' }
-        setFormData(prevFormData => ({
-            ...prevFormData,
-            roomCost: response.data.Room_Cost  // Correctly access Room_Cost
-        }));
+
+        // console.log('API Response:', response.data); // Log the full response
+
+        const exists = response.data.hasReport; // Access the correct property
+        // console.log("To check if it exists:", exists); 
+        
+        if (exists) {
+            console.log('This patient already has a report.'); // Log message if report exists
+        } else {
+            console.log('No existing report for this patient. You can create a report.'); // Log message if report does not exist
+        }
+
+        return exists; // Return the correct value
     } catch (error) {
-        console.error('Error fetching room cost:', error);
-        setModalMessage('Error fetching room cost.');
-        setShowModal(true);
+        console.error('Error checking existing report:', error);
+        return false; // Default to false on error
     }
 };
 
+  
+  
+useEffect(() => {
+  const fetchPatientVisits = async () => {
+    if (!selectedPatient) {
+      setFormData({
+        personalNumber: '',
+        patientName: '',
+        age: '',
+        patientGender: '',
+        bloodType: '',
+        diagnosis: '',
+        doctorName: '',
+        email: '',
+        phone: '',
+        condition: '',
+        therapy: '',
+        dateOfVisit: '',
+        roomCost: '',
+        medicineCost: ''
+      });
+      return;
+    }
 
-// console.log(fetchRoomCost)
-  useEffect(() => {
-    const fetchPatientVisits = async () => {
-      if (!selectedPatient) {
-        setFormData({
-          personalNumber: '',
-          patientName: '',
-          age: '',
-          patientGender: '',
-          bloodType: '',
-          diagnosis: '',
-          doctorName: '',
-          email: '',
-          phone: '',
-          condition: '',
-          therapy: '',
-          dateOfVisit: '',
-          roomCost: ''  // Reset room cost
-        });
+    try {
+      // Check if the patient has any visits
+      const visitCheckResponse = await axios.get(`http://localhost:9004/api/patient/${selectedPatient}/visit`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      // Check if the patient has no visits
+      if (!visitCheckResponse.data) {
+        setModalMessage('This patient has no visits.');
+        setShowModal(true);
         return;
       }
 
-      try {
-        const response = await axios.get(`http://localhost:9004/api/visit/patient/${selectedPatient}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+      // Check if the patient has an existing report
+      const reportExists = await checkExistingReport(selectedPatient);
+      
+      if (reportExists) {
+        setModalMessage('This patient already has a report.');
+        setShowModal(true);
+        return; // Prevent further processing if a report exists
+      }
 
-        const visits = response.data;
-        if (visits.length === 0) {
-          setFormData({
-            personalNumber: '',
-            patientName: '',
-            age: '',
-            patientGender: '',
-            bloodType: '',
-            diagnosis: '',
-            doctorName: '',
-            email: '',
-            phone: '',
-            condition: '',
-            therapy: '',
-            dateOfVisit: '',
-            roomCost: ''  // Reset room cost
-          });
-          setModalMessage('No visits found for this patient.');
-          setShowModal(true);
-          return;
+      const response = await axios.get(`http://localhost:9004/api/visit/patient/${selectedPatient}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
+      });
 
-        const visit = visits[0];
-        const patient = visit.Patient;
-        const doctor = visit.Doctor.Staff;
+      const visits = response.data;
+      
+      if (!Array.isArray(visits) || visits.length === 0) {
+        setModalMessage('No visits found for this patient.');
+        setShowModal(true);
+        return;
+      }
 
-        setFormData({
-          personalNumber: patient.Personal_Number,
-          patientName: `${patient.Patient_Fname} ${patient.Patient_Lname}`,
-          age: calculateAge(patient.Birth_Date),
-          patientGender: patient.Gender,
-          bloodType: patient.Blood_type,
-          diagnosis: visit.diagnosis,
-          doctorName: `${doctor.Emp_Fname} ${doctor.Emp_Lname}`,
-          email: patient.Email,
-          phone: patient.Phone,
-          condition: visit.condition,
-          therapy: visit.therapy,
-          dateOfVisit: visit.date_of_visit,
-          roomCost: ''  // Initialize room cost
-        });
+      const visit = visits[0];
+      const patient = visit.Patient;
+      const doctor = visit.Doctor.Staff;
 
-        // Fetch room cost for the selected patient
-        await fetchRoomCost(selectedPatient);
-        // console.log('Updated formData:', formData);
-      } catch (error) {
+      setFormData({
+        personalNumber: patient.Personal_Number,
+        patientName: `${patient.Patient_Fname} ${patient.Patient_Lname}`,
+        age: calculateAge(patient.Birth_Date),
+        patientGender: patient.Gender,
+        bloodType: patient.Blood_type,
+        diagnosis: visit.diagnosis,
+        doctorName: `${doctor.Emp_Fname} ${doctor.Emp_Lname}`,
+        email: patient.Email,
+        phone: patient.Phone,
+        condition: visit.condition,
+        therapy: visit.therapy,
+        dateOfVisit: visit.date_of_visit,
+        roomCost: '',
+        medicineCost: '' // Initialize medicine cost
+      });
+
+      // Fetch room cost and medicine cost for the selected patient
+      await fetchRoomCost(selectedPatient);
+      await fetchMedicineCost(selectedPatient); // Call the new function
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        // Specific error message for visits not found
+        setModalMessage('Visits not found.');
+      } else {
         console.error('Error fetching visit data:', error);
         setModalMessage('Error fetching visit data.');
-        setShowModal(true);
       }
-    };
+      setShowModal(true);
+    }
+  };
 
-    fetchPatientVisits();
-  }, [selectedPatient, token]);
+  fetchPatientVisits();
+}, [selectedPatient, token]);
 
 
   const calculateAge = birthDate => {
@@ -164,6 +235,7 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
   };
 
   const createAndDownloadPdf = async () => {
+    // Check for empty fields and show modal if any required field is missing
     if (
       !formData.personalNumber ||
       !formData.patientName ||
@@ -173,8 +245,7 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
       !formData.diagnosis ||
       !formData.doctorName ||
       !formData.email ||
-      !formData.phone 
-      // !formData.roomCost  // Validate room cost
+      !formData.phone
     ) {
       setModalMessage('Please fill in all fields before creating PDF.');
       setShowModal(true);
@@ -195,8 +266,11 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
         }
       );
 
+      // Create and download the PDF file
       const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
       saveAs(blob, `${formData.personalNumber}_Report.pdf`);
+
+      // Show success message
       setModalMessage('PDF created successfully.');
       setShowModal(true);
     } catch (error) {
@@ -205,6 +279,7 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
       console.error('Error:', error);
     }
   };
+
 
   const sendEmailWithPdf = async () => {
     if (
@@ -217,7 +292,6 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
       !formData.doctorName ||
       !formData.email ||
       !formData.phone 
-      // !formData.roomCost  // Validate room cost
     ) {
       setModalMessage('Please fill in all fields before sending email.');
       setShowModal(true);
@@ -229,7 +303,9 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
         'http://localhost:9004/api/report/send-email',
         {
           email: formData.email,
-          patientName: formData.patientName
+          patientName: formData.patientName,
+          roomCost: formData.roomCost, // Include medicineCost in the email body
+          medicineCost: formData.medicineCost  // Include medicine cost
         },
         {
           headers: {
@@ -247,63 +323,78 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
     }
   };
 
-  const createPdfAndSaveToDb = async () => {
+const createPdfAndSaveToDb = async () => {
+    // Check for empty fields
     if (
-      !formData.personalNumber ||
-      !formData.patientName ||
-      !formData.age ||
-      !formData.patientGender ||
-      !formData.bloodType ||
-      !formData.diagnosis ||
-      !formData.doctorName ||
-      !formData.email ||
-      !formData.phone 
-      // !formData.roomCost  // Validate room cost
+        !formData.personalNumber ||
+        !formData.patientName ||
+        !formData.age ||
+        !formData.patientGender ||
+        !formData.bloodType ||
+        !formData.diagnosis ||
+        !formData.doctorName ||
+        !formData.email ||
+        !formData.phone 
     ) {
-      setModalMessage('Please fill in all fields before saving report.');
-      setShowModal(true);
-      return;
+        setModalMessage('Please fill in all fields before saving report.');
+        setShowModal(true);
+        return;
     }
+
+    // Check if a report already exists for the selected patient
+    // console.log('Selected Patient ID:', selectedPatient);
+
+    // Check if a report already exists for the selected patient
+    const reportExists = await checkExistingReport(selectedPatient);
+    // console.log('Report exists:', reportExists);
+
+    if (reportExists) {
+        setModalMessage('This patient already has a report. You cannot create another one.');
+        setShowModal(true);
+        return; // Prevent saving if a report already exists
+    }
+    // Proceed with report creation if no existing report
     try {
-      const pdfResponse = await axios.post(
-        'http://localhost:9004/api/report/create-pdf',
-        {
-          ...formData
-        },
-        {
-          responseType: 'blob',
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+        const pdfResponse = await axios.post(
+            'http://localhost:9004/api/report/create-pdf',
+            {
+                ...formData
+            },
+            {
+                responseType: 'blob',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
+        const formDataWithPdf = new FormData();
+        formDataWithPdf.append('personal_number', formData.personalNumber);
+        formDataWithPdf.append('report', blob, `${formData.personalNumber}_Report.pdf`);
+        formDataWithPdf.append('Patient_ID', selectedPatient); // Add patient ID
+
+        for (const key in formData) {
+            formDataWithPdf.append(key, formData[key]);
         }
-      );
 
-      const blob = new Blob([pdfResponse.data], { type: 'application/pdf' });
-      const formDataWithPdf = new FormData();
-      formDataWithPdf.append('personal_number', formData.personalNumber);
-      formDataWithPdf.append('report', blob, `${formData.personalNumber}_Report.pdf`);
-      formDataWithPdf.append('Patient_ID', selectedPatient); // Add this line
+        await axios.post('http://localhost:9004/api/report/save-report-to-db', formDataWithPdf, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'multipart/form-data',
+            },
+        });
 
-      for (const key in formData) {
-        formDataWithPdf.append(key, formData[key]);
-      }
-
-      await axios.post('http://localhost:9004/api/report/save-report-to-db', formDataWithPdf, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      setModalMessage('PDF report saved to database successfully.');
-      setShowModal(true);
-      onSaveSuccess(); // Notify the parent component to refresh the reports
+        setModalMessage('Report saved successfully.');
+        setShowModal(true);
+        onSaveSuccess(); 
+        // Call the onSaveSuccess function
     } catch (error) {
-      setModalMessage('Error creating PDF or saving report to database.');
-      setShowModal(true);
-      console.error('Error:', error);
+        console.error('Error saving report:', error);
+        setModalMessage('Error saving report.');
+        setShowModal(true);
     }
-  };
+};
 
   const closeModal = () => {
     setShowModal(false);

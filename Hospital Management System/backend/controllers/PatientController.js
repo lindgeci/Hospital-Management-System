@@ -1,5 +1,6 @@
 const Patient = require('../models/Patient');
 const { Op } = require('sequelize');
+const Visit = require('../models/Visits');
 const FindAllPatients = async (req, res) => {
     try {
         const patients = await Patient.findAll();
@@ -185,7 +186,69 @@ const FindPatientByPersonalNumber = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+const Medicine = require('../models/Medicine');
+const FindMedicineCostByPatientId = async (req, res) => {
+    try {
+        const { patientId } = req.params;
 
+        // Fetch medicines associated with the patient
+        const medicines = await Medicine.findAll({
+            where: { Patient_ID: patientId }
+        });
+
+        if (!medicines.length) {
+            return res.status(404).json({ error: 'No medicines found for this patient' });
+        }
+
+        // Extract the costs
+        const costs = medicines.map(medicine => medicine.M_Cost);
+
+        res.json({ costs });
+    } catch (error) {
+        console.error('Error fetching medicine cost:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+const FindEmailByPatientId = async (req, res) => {
+    try {
+        const { patientId } = req.params;
+
+        // Fetch the patient by ID
+        const patient = await Patient.findByPk(patientId, {
+            attributes: ['Email'] // Only fetch the Email field
+        });
+
+        if (!patient) {
+            return res.status(404).json({ error: 'Patient not found' });
+        }
+
+        // Return the email
+        res.json({ Email: patient.Email });
+    } catch (error) {
+        console.error('Error fetching patient email:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+const CheckPatientVisit = async (req, res) => {
+    try {
+        const { id } = req.params; // Get the patient ID from the request parameters
+
+        // Check if the patient has any visits
+        const visits = await Visit.findAll({
+            where: { Patient_ID: id } // Query visits for the specific patient ID
+        });
+
+        if (visits.length > 0) {
+            res.json({ hasVisit: true,  }); // Return true if visits are found
+        } else {
+            res.json({ hasVisit: false }); // Return false if no visits are found
+        }
+    } catch (error) {
+        console.error('Error checking patient visits:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
 
 module.exports = {
     FindAllPatients,
@@ -195,5 +258,8 @@ module.exports = {
     DeletePatient,
     CheckPatientExistence,
     FindPatientByPersonalNumber,
-    FindRoomCostByPatientId
+    FindRoomCostByPatientId,
+    FindMedicineCostByPatientId,
+    FindEmailByPatientId,
+    CheckPatientVisit
 };

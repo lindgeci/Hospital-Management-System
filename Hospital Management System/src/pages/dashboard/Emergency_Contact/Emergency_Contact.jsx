@@ -4,7 +4,8 @@ import { DataGrid } from '@mui/x-data-grid';
 import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 import Cookies from 'js-cookie';
 import { Add, Delete, Edit } from '@mui/icons-material';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
+import { useLocation } from 'react-router-dom';
 
 const CreateEmergencyContact = lazy(() => import('./CreateEmergency_Contact'));
 const UpdateEmergencyContact = lazy(() => import('./UpdateEmergency_Contact'));
@@ -14,6 +15,7 @@ function EmergencyContact({ showCreateForm, setShowCreateForm, showUpdateForm, s
     const [deleteContactId, setDeleteContactId] = useState(null);
     const [userRole, setUserRole] = useState('');
     const token = Cookies.get('token');
+    const location = useLocation(); // Get location from React Router
 
     const handleUpdateButtonClick = (contactId) => {
         setSelectedEmergency_ContactId(contactId);
@@ -58,7 +60,12 @@ function EmergencyContact({ showCreateForm, setShowCreateForm, showUpdateForm, s
         };
 
         fetchEmergencyContacts();
-    }, [token]);
+
+        // Check if navigation state contains patientId to show the CreateEmergencyContact form
+        if (location.state?.patientId && location.state?.showCreateForm) {
+            setShowCreateForm(true);
+        }
+    }, [token, location.state, setShowCreateForm]);
 
     const handleDelete = (id) => {
         setDeleteContactId(id);
@@ -85,13 +92,13 @@ function EmergencyContact({ showCreateForm, setShowCreateForm, showUpdateForm, s
         { field: 'Contact_ID', headerName: 'Contact ID', flex: 1 },
         { field: 'Patient_Name', headerName: 'Patient Name', flex: 1 },
         { field: 'Contact_Name', headerName: 'Contact Name', flex: 1 },
-        { field: 'Phone', headerName: 'Phone', flex: 1.5 },
-        { field: 'Relation', headerName: 'Relation', flex: 1.5 },
-        ...(userRole !== 'patient' ? [
+        { field: 'Phone', headerName: 'Phone', flex: 1 },
+        { field: 'Relation', headerName: 'Relation', flex: 1 },
+        ...(userRole !== 'doctor' ? [
             {
                 field: 'update',
                 headerName: 'Update',
-                flex: 0.5,
+                flex: 1,
                 renderCell: (params) => (
                     <Button
                         variant="contained"
@@ -105,7 +112,7 @@ function EmergencyContact({ showCreateForm, setShowCreateForm, showUpdateForm, s
             {
                 field: 'delete',
                 headerName: 'Delete',
-                flex: 0.5,
+                flex: 1,
                 renderCell: (params) => (
                     <Button
                         variant="contained"
@@ -147,14 +154,13 @@ function EmergencyContact({ showCreateForm, setShowCreateForm, showUpdateForm, s
                 <Typography variant="h6" style={{ marginRight: 'auto' }}>
                     Emergency Contacts
                 </Typography>
-                {userRole !== 'patient' && !showCreateForm && (
+                {userRole !== 'doctor' && !showCreateForm && (
                     <Button
                         variant="contained"
                         color="primary"
                         onClick={handleCreateFormToggle}
                         startIcon={<Add />}
                     >
-                        Add Emergency Contact
                     </Button>
                 )}
             </Box>

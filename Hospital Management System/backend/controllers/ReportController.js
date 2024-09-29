@@ -6,9 +6,10 @@ const pdfTemplate = require('../documents');
 const PdfReport = require('../models/PdfReport');
 require('dotenv').config();
 const Report = require('../models/PdfReport');
-
+const Staff = require('../models/Staff');
 const outputFilePath = path.join(__dirname, '../result.pdf');
-
+const Doctor = require('../models/Doctor');
+const Patient = require('../models/Patient');
 // Email configuration
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -17,20 +18,157 @@ const transporter = nodemailer.createTransport({
         pass: process.env.GMAIL_PASS,
     },
 });
+const getPatientByEmail = async (email) => {
+    try {
+        const patient = await Patient.findOne({
+            where: { Email: email }
+        });
+
+        if (!patient) {
+            throw new Error('Patient not found');
+        }
+
+        return patient;
+    } catch (error) {
+        console.error('Error fetching patient by email:', error);
+        throw error;
+    }
+};
+const getDoctorByEmail = async (email) => {
+    try {
+        // Fetch the staff member with the given email
+        const staff = await Staff.findOne({
+            where: { Email: email } // Check the email in the Staff table
+        });
+
+        if (!staff) {
+            throw new Error('Staff member not found');
+        }
+
+        // Fetch the doctor associated with the staff member
+        const doctor = await Doctor.findOne({
+            where: { Emp_ID: staff.Emp_ID } // Use Emp_ID to find the associated doctor
+        });
+
+        if (!doctor) {
+            throw new Error('Doctor not found');
+        }
+
+        return doctor;
+    } catch (error) {
+        console.error('Error fetching doctor by email:', error);
+        throw error;
+    }
+};
+const findAllReports = async (req, res) => {
+    try {
+        const userEmail = req.user.email;
+        const userRole = req.user.role;
+
+        let reports;
+        if (userRole === 'admin') {
+            // Fetch all reports for admin
+            reports = await PdfReport.findAll({
+                include: [
+                    {
+                        model: Patient, // Include Patient details
+                    }
+                ],
+            });
+        } else if (userRole === 'patient') {
+            // Fetch reports for the logged-in patient
+            const patient = await getPatientByEmail(userEmail);
+            reports = await PdfReport.findAll({
+                where: { Patient_ID: patient.Patient_ID },
+                include: [
+                    {
+                        model: Patient, // Include Patient details
+                    }
+                ],
+            });
+        } else if (userRole === 'doctor') {
+            // Fetch reports for patients treated by the logged-in doctor
+            const doctor = await getDoctorByEmail(userEmail); // Fetch doctor based on email
+            reports = await PdfReport.findAll({
+                include: [
+                    {
+                        model: Patient, // Include Patient details
+                        where: { Doctor_ID: doctor.Doctor_ID }
+                    }
+                ],
+            });
+        } else {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const reportsData = reports.map(report => {
+            const reportJson = report.toJSON(); // Convert to JSON
+
+            // Return only the specified fields
+            return {
+                Report_ID: reportJson.Report_ID,
+                personal_number: reportJson.personal_number,
+                created_at: reportJson.created_at,
+                Patient_ID: reportJson.Patient_ID,
+                Patient: {
+                    Patient_ID: reportJson.Patient.Patient_ID,
+                    Personal_Number: reportJson.Patient.Personal_Number,
+                    Patient_Fname: reportJson.Patient.Patient_Fname,
+                    Birth_Date: reportJson.Patient.Birth_Date,
+                    Patient_Lname: reportJson.Patient.Patient_Lname,
+                    Blood_type: reportJson.Patient.Blood_type,
+                    Email: reportJson.Patient.Email,
+                    Gender: reportJson.Patient.Gender,
+                    Phone: reportJson.Patient.Phone,
+                },
+                Patient_Name: `${reportJson.Patient.Patient_Fname} ${reportJson.Patient.Patient_Lname}`
+            };
+        });
+
+        res.json(reportsData);
+    } catch (error) {
+        console.error('Error fetching reports:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+
+
+const checkPatientReport = async (req, res) => {
+    const { patientId } = req.params; // Get the patient ID from the request parameters
+
+    try {
+        // Fetch reports for the given patient ID
+        const reports = await PdfReport.findAll({
+            where: { Patient_ID: patientId },
+        });
+
+        // Check if reports exist
+        if (reports.length > 0) {
+            res.status(200).json({ hasReport: true });
+        } else {
+            res.status(200).json({ hasReport: false });
+        }
+    } catch (error) {
+        console.error('Error checking patient report:', error);
+        res.status(500).json({ error: 'Error checking patient report', message: error.message });
+    }
+};
+
 const createPdf = async (req, res) => {
     console.log('Request Body:', req.body); // Add this line
     try {
         const {
             personalNumber, patientName, age, patientGender, bloodType, diagnosis,
-            doctorName, email, phone, condition, therapy, dateOfVisit, roomCost // Include roomCost
+            doctorName, email, phone, condition, therapy, dateOfVisit, roomCost,medicineCost  // Include roomCost
         } = req.body;
 
         // Print the entire roomCost value
         console.log('Room Cost:', roomCost); // Print roomCost here
-
+        console.log('Room Cost:', medicineCost)
         const htmlContent = pdfTemplate({
             personalNumber, patientName, age, patientGender, bloodType, diagnosis,
-            doctorName, email, phone, condition, therapy, dateOfVisit, roomCost // Pass roomCost to template
+            doctorName, email, phone, condition, therapy, dateOfVisit, roomCost, medicineCost // Pass roomCost to template
         });
 
         const document = {
@@ -60,7 +198,7 @@ const createPdf = async (req, res) => {
 
 const sendEmailWithPdf = async (req, res) => {
     try {
-        const { email, patientName, roomCost } = req.body; // Include roomCost
+        const { email, patientName, roomCost, medicineCost } = req.body; // Include roomCost
 
         // Print the entire roomCost value
         console.log('Room Cost (Email):', roomCost); // Print roomCost here
@@ -77,7 +215,6 @@ const sendEmailWithPdf = async (req, res) => {
 
             Please find the attached patient report for your recent hospital visit.
 
-            Room Cost: ${roomCost} // Include roomCost in the email body
 
             If you have any questions or need further assistance, please do not hesitate to contact us.
 
@@ -126,11 +263,13 @@ const saveReportToDB = async (req, res) => {
 
         let personalNumber = req.body.personalNumber;
         let patientId = req.body.Patient_ID;
-        let roomCost = req.body.roomCost; // Include roomCost
+        let roomCost = req.body.roomCost;
+        let medicineCost = req.body.medicineCost; // Include roomCost
 
         console.log('Received personalNumber:', personalNumber);
         console.log('Received Patient_ID:', patientId);
         console.log('Received roomCost:', roomCost); // Log roomCost
+        console.log('Received medicineCost:', medicineCost);
 
         // Ensure personalNumber is a string
         if (typeof personalNumber === 'number') {
@@ -161,7 +300,8 @@ const saveReportToDB = async (req, res) => {
             personal_number: personalNumber,
             report: pdfReportData,
             Patient_ID: patientId,
-            room_cost: roomCost // Save roomCost in the database
+            room_cost: roomCost,
+            M_cost: medicineCost // Save roomCost in the database
         });
 
         res.status(200).json({ message: 'Report saved to database successfully', pdfReport });
@@ -202,5 +342,7 @@ module.exports = {
     fetchPdf,
     saveReportToDB,
     fetchReportsFromDB,
-    deleteReport
+    deleteReport,
+    checkPatientReport,
+    findAllReports
 };

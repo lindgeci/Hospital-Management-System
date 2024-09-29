@@ -128,7 +128,7 @@ function UpdateBill({ id, onClose }) {
 
     const updateBill = async () => {
         try {
-            await axios.put(`http://localhost:9004/api/bills/update/${id}`, formData, {
+            const response = await axios.put(`http://localhost:9004/api/bills/update/${id}`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -136,11 +136,16 @@ function UpdateBill({ id, onClose }) {
             onClose();
             window.location.reload();
         } catch (error) {
-            console.error('Error updating bill:', error);
-            showAlert('Error updating bill.');
+            if (error.response) {
+                // Handle error from the backend
+                showAlert(error.response.data.error); // Show the error message from the backend
+            } else {
+                console.error('Error updating bill:', error);
+                showAlert('Error updating bill.');
+            }
         }
     };
-
+    
     const closeErrorModal = () => {
         setShowErrorModal(false);
     };

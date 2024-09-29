@@ -2,7 +2,7 @@ import React, { useState, useEffect, lazy, Suspense } from 'react';
 import axios from 'axios';
 import { Box, TextField, Button, Typography, Modal, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import Cookies from 'js-cookie';
-
+import {jwtDecode}from 'jwt-decode';
 const ErrorModal = lazy(() => import('../../../components/ErrorModal'));
 
 function UpdateUser({ id, onClose }) {
@@ -16,6 +16,27 @@ function UpdateUser({ id, onClose }) {
     const [originalData, setOriginalData] = useState({});
     const [users, setUsers] = useState([]);
     const token = Cookies.get('token');
+    const [userRole, setUserRole] = useState('');
+
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+                const decodedToken = jwtDecode(token);
+                const userEmail = decodedToken.email;
+    
+                const userResponse = await axios.get('http://localhost:9004/api/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const currentUser = userResponse.data.find(user => user.email === userEmail);
+                const role = currentUser.role;
+                setUserRole(role);
+            } catch (err) {
+                console.error('Error fetching user role:', err.response ? err.response.data : err.message);
+            }
+        };
+    
+        fetchUserRole();
+    }, [token]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -88,7 +109,11 @@ function UpdateUser({ id, onClose }) {
             showAlert('Role cannot be empty.');
             return;
         }
-
+        const validateName = (name) => /^[A-Za-z]+$/.test(name);
+        if (!validateName(username)) {
+            showAlert('Username can only contain letters.');
+            return;
+        }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             showAlert('Invalid email address');
@@ -157,6 +182,7 @@ function UpdateUser({ id, onClose }) {
                     onChange={handleChange}
                     helperText="Username must be at least 3 characters long."
                 />
+                {userRole == 'admin' && (
                 <FormControl fullWidth margin="dense">
                     <InputLabel id="role-label">Role</InputLabel>
                     <Select
@@ -175,10 +201,12 @@ function UpdateUser({ id, onClose }) {
                         Select the user role from the list.
                     </Typography>
                 </FormControl>
+                )}
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleUpdateUser} sx={{ mr: 1 }}>Submit</Button>
                     <Button variant="outlined" onClick={onClose}>Cancel</Button>
                 </Box>
+                
             </Box>
         </Modal>
     );

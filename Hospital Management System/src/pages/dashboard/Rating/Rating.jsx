@@ -5,7 +5,7 @@ import CreateRating from './CreateRating';
 import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 import Cookies from 'js-cookie';
 import { Add, Delete, Edit } from '@mui/icons-material';
-
+import { useLocation } from 'react-router-dom';
 function Rating({
     showCreateForm,
     setShowCreateForm,
@@ -18,7 +18,7 @@ function Rating({
     const [employees, setEmployees] = useState([]);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const token = Cookies.get('token');
-
+    const location = useLocation();
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -55,7 +55,10 @@ function Rating({
         };
 
         fetchData();
-    }, [token]);
+        if (location.state?.staffid && location.state?.showCreateForm) {
+            setShowCreateForm(true);
+        }
+    }, [token, location.state, setShowCreateForm]);
 
     const handleUpdateButtonClick = (ratingId) => {
         setSelectedRatingId(ratingId);
@@ -93,7 +96,7 @@ function Rating({
         {
             field: 'update',
             headerName: 'Update',
-            width: 130,
+            flex: 1,
             renderCell: (params) => (
                 <Button
                     variant="contained"
@@ -107,7 +110,7 @@ function Rating({
         {
             field: 'delete',
             headerName: 'Delete',
-            width: 130,
+            flex: 1,
             renderCell: (params) => (
                 <Button
                     variant="contained"
@@ -161,7 +164,6 @@ function Rating({
                         onClick={handleCreateFormToggle}
                         startIcon={<Add />}
                     >
-                        Add Rating
                     </Button>
                 )}
             </Box>

@@ -5,7 +5,7 @@ import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, D
 import Cookies from 'js-cookie';
 import { Add, Delete, Edit } from '@mui/icons-material';
 import {jwtDecode} from 'jwt-decode';
-
+import { useLocation } from 'react-router-dom';
 const CreateMedicalHistory = lazy(() => import('./CreateMedicalHistory'));
 const UpdateMedicalHistory = lazy(() => import('./UpdateMedicalHistory'));
 
@@ -14,7 +14,7 @@ function MedicalHistory({ showCreateForm, setShowCreateForm, showUpdateForm, set
     const [deleteMedicalHistoryId, setDeleteMedicalHistoryId] = useState(null);
     const [userRole, setUserRole] = useState('');
     const token = Cookies.get('token');
-
+    const location = useLocation();
     const handleUpdateButtonClick = (medicalHistoryId) => {
         setSelectedMedicalHistoryId(medicalHistoryId);
         setShowUpdateForm(true);
@@ -58,7 +58,11 @@ function MedicalHistory({ showCreateForm, setShowCreateForm, showUpdateForm, set
         };
 
         fetchMedicalHistories();
-    }, [token]);
+        // Check if navigation state contains patientId to show the CreateInsurance form
+        if (location.state?.patientId && location.state?.showCreateForm) {
+            setShowCreateForm(true);
+        }
+    }, [token, location.state, setShowCreateForm]);
 
     const handleDelete = (id) => {
         setDeleteMedicalHistoryId(id);
@@ -95,7 +99,7 @@ function MedicalHistory({ showCreateForm, setShowCreateForm, showUpdateForm, set
         { field: 'Patient_Name', headerName: 'Patient Name', flex: 1 },
         { field: 'Allergies', headerName: 'Allergies', flex: 1 },
         { field: 'Pre_Conditions', headerName: 'Pre Conditions', flex: 1 },
-        ...(userRole !== 'patient' ? [
+       
             {
                 field: 'update',
                 headerName: 'Update',
@@ -110,6 +114,7 @@ function MedicalHistory({ showCreateForm, setShowCreateForm, showUpdateForm, set
                     </Button>
                 )
             },
+            ...(userRole == 'admin' ? [
             {
                 field: 'delete',
                 headerName: 'Delete',
@@ -155,14 +160,13 @@ function MedicalHistory({ showCreateForm, setShowCreateForm, showUpdateForm, set
                 <Typography variant="h6" style={{ marginRight: 'auto' }}>
                     Medical Histories
                 </Typography>
-                {userRole !== 'patient' && !showCreateForm && (
+                {userRole == 'admin' && !showCreateForm && (
                     <Button
                         variant="contained"
                         color="primary"
                         onClick={handleCreateFormToggle}
                         startIcon={<Add />}
                     >
-                        Add Medical History
                     </Button>
                 )}
             </Box>

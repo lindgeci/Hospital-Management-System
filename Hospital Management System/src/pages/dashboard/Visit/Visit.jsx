@@ -30,6 +30,7 @@ function Visit({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdat
                 const userResponse = await axios.get('http://localhost:9004/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
                 const currentUser = userResponse.data.find(user => user.email === userEmail);
                 const role = currentUser.role;
+                console.log('User Role:', role);
                 setUserRole(role);
             } catch (err) {
                 console.error('Error fetching user role:', err.response ? err.response.data : err.message);
@@ -42,28 +43,28 @@ function Visit({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdat
     useEffect(() => {
         const fetchVisits = async () => {
             try {
-                const userResponse = await axios.get('http://localhost:9004/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
-                const userRole = userResponse.data.role;
-
-                const endpoint = userRole === 'admin' ? 'http://localhost:9004/api/visit' : 'http://localhost:9004/api/doctor/data';
-                
-                const response = await axios.get(endpoint, { headers: { 'Authorization': `Bearer ${token}` } });
-                const data = userRole === 'admin' ? response.data : response.data.visits;
-
+                const endpoint = 'http://localhost:9004/api/visit';
+                const response = await axios.get(endpoint, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = response.data; // Access the visits data directly from the response
+    
                 const visitsDataWithNames = data.map(visit => ({
                     ...visit,
                     Patient_Name: visit.Patient ? `${visit.Patient.Patient_Fname} ${visit.Patient.Patient_Lname}` : 'Unknown Patient',
-                    Doctor_Name: visit.Doctor_Name || 'Unknown Doctor'
+                    Doctor_Name: visit.Doctor && visit.Doctor.Staff ? `${visit.Doctor.Staff.Emp_Fname} ${visit.Doctor.Staff.Emp_Lname}` : 'Unknown Doctor'
                 }));
-
+    
                 setVisits(visitsDataWithNames);
             } catch (err) {
-                console.error('Error fetching visits:', err.response ? err.response.data : err.message);
+                console.error('Error fetching visits:', err); // Log the entire error object
             }
         };
-
+    
         fetchVisits();
-    }, [token]);
+    }, [token]); // Only depend on the token
+    
+        
 
     const handleDelete = (id) => {
         setDeleteVisitId(id);
@@ -108,6 +109,7 @@ function Visit({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdat
         { field: 'condition', headerName: 'Condition', flex: 1 },
         { field: 'diagnosis', headerName: 'Diagnosis', flex: 1 },
         { field: 'therapy', headerName: 'Therapy', flex: 1 },
+        ...(userRole !== 'patient' ? [
         {
             field: 'update',
             headerName: 'Update',
@@ -121,8 +123,9 @@ function Visit({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdat
                 >
                 </Button>
             )
-        },
-        ...(userRole !== 'doctor' ? [
+        }
+    ] : []),
+    ...(userRole !== 'doctor' ? [
             {
                 field: 'delete',
                 headerName: 'Delete',
@@ -137,7 +140,7 @@ function Visit({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdat
                     </Button>
                 )
             }
-        ] : [])
+        ] : []),
     ];
 
     return (
@@ -164,23 +167,22 @@ function Visit({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdat
                 </Dialog>
             )}
 
-            {userRole !== 'doctor' && (
+            
                 <Box mt={4} display="flex" alignItems="center">
                     <Typography variant="h6" style={{ marginRight: 'auto' }}>
                         Visits
                     </Typography>
-                    {showCreateForm ? null : (
+                    {userRole !== 'doctor' && !showCreateForm && (
                         <Button
                             variant="contained"
                             color="primary"
                             onClick={handleCreateFormToggle}
                             startIcon={<Add />}
                         >
-                            Add Visit
                         </Button>
                     )}
                 </Box>
-            )}
+            
 
             {showCreateForm && (
                 <Suspense fallback={<div>Loading...</div>}>

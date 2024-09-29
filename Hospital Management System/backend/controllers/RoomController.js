@@ -1,15 +1,58 @@
 const Room = require('../models/Room');
 const { Op } = require('sequelize');
+const Patient = require('../models/Patient');
+const getPatientByEmail = async (email) => {
+    try {
+        const patient = await Patient.findOne({
+            where: { Email: email }
+        });
 
+        if (!patient) {
+            throw new Error('Patient not found');
+        }
+
+        return patient;
+    } catch (error) {
+        console.error('Error fetching patient by email:', error);
+        throw error;
+    }
+};
 const FindAllRooms = async (req, res) => {
     try {
-        const rooms = await Room.findAll();
-        res.json(rooms);
+        const userEmail = req.user.email;
+        const userRole = req.user.role;
+
+        let rooms;
+        if (userRole === 'admin') {
+            rooms = await Room.findAll({
+                include: {
+                    model: Patient // Include Patient details if needed
+                },
+            });
+        } else if (userRole === 'patient') {
+            const patient = await getPatientByEmail(userEmail);
+            rooms = await Room.findAll({
+                where: { Patient_ID: patient.Patient_ID }, // Assuming rooms are associated with patients
+                include: {
+                    model: Patient
+                },
+            });
+        } else {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const roomsDataWithNames = rooms.map(room => ({
+            ...room.toJSON(),
+            Patient_Name: room.Patient ? `${room.Patient.Patient_Fname} ${room.Patient.Patient_Lname}` : 'Unknown Patient'
+        }));
+
+        res.json(roomsDataWithNames);
     } catch (error) {
         console.error('Error fetching all rooms:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 const FindSingleRoom = async (req, res) => {
     try {

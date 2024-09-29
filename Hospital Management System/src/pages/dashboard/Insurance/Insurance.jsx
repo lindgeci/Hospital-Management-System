@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
 import axios from 'axios';
 import { DataGrid } from '@mui/x-data-grid';
 import CreateInsurance from './CreateInsurance';
 import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 import Cookies from 'js-cookie';
 import { Add, Delete, Edit } from '@mui/icons-material';
+import { useLocation } from 'react-router-dom';
+import {jwtDecode}from 'jwt-decode';
 
 function Insurance({
     showCreateForm,
@@ -18,6 +20,30 @@ function Insurance({
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const [patients, setPatients] = useState([]);
     const token = Cookies.get('token');
+    const location = useLocation(); // Get location from React Router
+    const [userRole, setUserRole] = useState('');
+
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+                const decodedToken = jwtDecode(token);
+                const userEmail = decodedToken.email;
+                
+                const userResponse = await axios.get('http://localhost:9004/api/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const currentUser = userResponse.data.find(user => user.email === userEmail);
+                const role = currentUser.role;
+                // console.log(currentUser);
+                // console.log('User Role:', role); // Debug log to verify the user role
+                setUserRole(role);
+            } catch (err) {
+                console.error('Error fetching user role:', err.response ? err.response.data : err.message);
+            }
+        };
+
+        fetchUserRole();
+    }, [token]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -53,7 +79,12 @@ function Insurance({
         };
 
         fetchData();
-    }, [token]);
+
+        // Check if navigation state contains patientId to show the CreateInsurance form
+        if (location.state?.patientId && location.state?.showCreateForm) {
+            setShowCreateForm(true);
+        }
+    }, [token, location.state, setShowCreateForm]);
 
     const handleUpdateButtonClick = (insuranceId) => {
         setSelectedInsuranceId(insuranceId);
@@ -83,17 +114,17 @@ function Insurance({
     };
 
     const columns = [
-        { field: 'Policy_Number', headerName: 'Policy Number', flex: 1  },
-        { field: 'Patient_Name', headerName: 'Patient Name', flex: 1  },
-        { field: 'Ins_Code', headerName: 'Ins. Code', flex: 1  },
-        { field: 'End_Date', headerName: 'End Date', flex: 1  },
-        { field: 'Provider', headerName: 'Provider', flex: 1  },
-        { field: 'Dental', headerName: 'Dental', flex: 1  },
+        { field: 'Policy_Number', headerName: 'Policy Number', flex: 1 },
+        { field: 'Patient_Name', headerName: 'Patient Name', flex: 1 },
+        { field: 'Ins_Code', headerName: 'Ins. Code', flex: 1 },
+        { field: 'End_Date', headerName: 'End Date', flex: 1 },
+        { field: 'Provider', headerName: 'Provider', flex: 1 },
+        { field: 'Dental', headerName: 'Dental', flex: 1 },
 
         {
             field: 'update',
             headerName: 'Update',
-            width: 130,
+            flex: 1 ,
             renderCell: (params) => (
                 <Button
                     variant="contained"
@@ -107,7 +138,7 @@ function Insurance({
         {
             field: 'delete',
             headerName: 'Delete',
-            width: 130,
+            flex: 1 ,
             renderCell: (params) => (
                 <Button
                     variant="contained"
@@ -155,7 +186,6 @@ function Insurance({
                         onClick={handleCreateFormToggle}
                         startIcon={<Add />}
                     >
-                        Add Insurance
                     </Button>
                 )}
             </Box>

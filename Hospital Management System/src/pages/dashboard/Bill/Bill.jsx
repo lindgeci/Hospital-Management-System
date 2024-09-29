@@ -5,6 +5,7 @@ import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, D
 import Cookies from 'js-cookie';
 import { Add, Delete, Edit } from '@mui/icons-material';
 import {jwtDecode} from 'jwt-decode';
+import { useLocation } from 'react-router-dom';
 
 const CreateBill = lazy(() => import('./CreateBill'));
 const UpdateBill = lazy(() => import('./UpdateBill'));
@@ -14,6 +15,7 @@ function Bill({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdate
     const [deleteBillId, setDeleteBillId] = useState(null);
     const [userRole, setUserRole] = useState('');
     const token = Cookies.get('token');
+    const location = useLocation(); // Get location from React Router
 
     const handleUpdateButtonClick = (billId) => {
         setSelectedBillId(billId);
@@ -58,7 +60,11 @@ function Bill({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdate
         };
 
         fetchBills();
-    }, [token]);
+        // Check if navigation state contains patientId to show the CreateInsurance form
+        if (location.state?.patientId && location.state?.showCreateForm) {
+            setShowCreateForm(true);
+        }
+    }, [token, location.state, setShowCreateForm]);
 
     const handleDelete = (id) => {
         setDeleteBillId(id);
@@ -169,7 +175,6 @@ function Bill({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdate
                         onClick={handleCreateFormToggle}
                         startIcon={<Add />}
                     >
-                        Add Bill
                     </Button>
                 )}
             </Box>

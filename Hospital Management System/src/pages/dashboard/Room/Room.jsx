@@ -5,7 +5,7 @@ import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, D
 import Cookies from 'js-cookie';
 import { Add, Delete, Edit } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
-
+import {jwtDecode}from 'jwt-decode';
 const CreateRoom = lazy(() => import('./CreateRoom'));
 const UpdateRoom = lazy(() => import('./UpdateRoom'));
 
@@ -14,11 +14,33 @@ function Room({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdate
     const [deleteRoomId, setDeleteRoomId] = useState(null);
     const token = Cookies.get('token');
     const location = useLocation();
-
+    const [userRole, setUserRole] = useState('');
     const handleUpdateButtonClick = (roomId) => {
         setSelectedRoomId(roomId);
         setShowUpdateForm(true);
     };
+
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+                const decodedToken = jwtDecode(token);
+                const userEmail = decodedToken.email;
+                
+                const userResponse = await axios.get('http://localhost:9004/api/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const currentUser = userResponse.data.find(user => user.email === userEmail);
+                const role = currentUser.role;
+                console.log(currentUser);
+                // console.log('User Role:', role); // Debug log to verify the user role
+                setUserRole(role);
+            } catch (err) {
+                console.error('Error fetching user role:', err.response ? err.response.data : err.message);
+            }
+        };
+
+        fetchUserRole();
+    }, [token]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -77,7 +99,9 @@ function Room({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdate
         { field: 'Room_type', headerName: 'Room Type', flex: 1 },
         { field: 'Patient_Name', headerName: 'Patient Name', flex: 1 },
         { field: 'Room_cost', headerName: 'Cost (€)', flex: 1 },
+        ...(userRole == 'admin' ? [
         {
+            
             field: 'update',
             headerName: 'Update',
             flex: 1,
@@ -105,6 +129,7 @@ function Room({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdate
                 </Button>
             )
         }
+    ] : [])
     ];
 
     return (
@@ -131,18 +156,17 @@ function Room({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdate
                 </Dialog>
             )}
 
-            <Box mt={4} display="flex" alignItems="center">
-                <Typography variant="h6" style={{ marginRight: 'auto' }}>
+            <Box mt={4} display="flex" alignItems="center" justifyContent="space-between">
+                <Typography variant="h6">
                     Rooms
                 </Typography>
-                {showCreateForm ? null : (
+                {userRole == 'admin' && !showCreateForm && (
                     <Button
                         variant="contained"
                         color="primary"
                         onClick={handleCreateFormToggle}
                         startIcon={<Add />}
                     >
-                        Add Room
                     </Button>
                 )}
             </Box>

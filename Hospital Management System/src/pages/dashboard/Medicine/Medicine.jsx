@@ -5,6 +5,8 @@ import CreateMedicine from './CreateMedicine';
 import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 import { Add, Delete, Edit } from '@mui/icons-material';
 import Cookies from 'js-cookie';
+import {jwtDecode}from 'jwt-decode'; // Make sure jwtDecode is imported
+import { useLocation } from 'react-router-dom';
 
 function Medicine({
     showCreateForm,
@@ -13,20 +15,64 @@ function Medicine({
     setSelectedMedicineId,
 }) {
     const [medicine, setMedicine] = useState([]);
+    const [patients, setPatients] = useState([]);
     const [deleteMedicineId, setDeleteMedicineId] = useState(null);
+    const [userRole, setUserRole] = useState('');
     const token = Cookies.get('token');
+    const location = useLocation();
 
     useEffect(() => {
-        axios.get('http://localhost:9004/api/medicine', {
-            headers: {
-                'Authorization': `Bearer ${token}`
+        const fetchUserRole = async () => {
+            try {
+                const decodedToken = jwtDecode(token);
+                const userEmail = decodedToken.email;
+                
+                const userResponse = await axios.get('http://localhost:9004/api/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const currentUser = userResponse.data.find(user => user.email === userEmail);
+                const role = currentUser.role;
+                // console.log(currentUser);
+                // console.log('User Role:', role); // Debug log to verify the user role
+                setUserRole(role);
+            } catch (err) {
+                console.error('Error fetching user role:', err.response ? err.response.data : err.message);
             }
-        })
-        .then((res) => {
-            setMedicine(res.data);
-        })
-        .catch((err) => console.log(err));
+        };
+
+        fetchUserRole();
     }, [token]);
+    useEffect(() => {
+        const fetchMedicines = async () => {
+            try {
+                const endpoint = 'http://localhost:9004/api/medicine';
+                // console.log('Fetching medicines with token:', token);
+                const response = await axios.get(endpoint, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = response.data; // Accessing data directly from the response
+    
+                const medicineDataWithNames = data.map(item => ({
+                    ...item,
+                    Patient_Name: item.Patient ? `${item.Patient.Patient_Fname} ${item.Patient.Patient_Lname}` : 'Unknown Patient'
+                }));
+    
+                setMedicine(medicineDataWithNames);
+            } catch (err) {
+                console.error('Error fetching medicines:', err); // Log the entire error object
+            }
+        };
+    
+        fetchMedicines();
+    
+        // Check if navigation state contains patientId to show the CreateInsurance form
+        if (location.state?.patientId && location.state?.showCreateForm) {
+            setShowCreateForm(true);
+        }
+    }, [token, location.state, setShowCreateForm]);
+    
+    
+    
 
     const handleUpdateButtonClick = (medicineId) => {
         setSelectedMedicineId(medicineId);
@@ -44,10 +90,8 @@ function Medicine({
         try {
             await axios.delete(`http://localhost:9004/api/medicine/delete/${deleteMedicineId}`);
             setMedicine(medicine.filter((item) => item.Medicine_ID !== deleteMedicineId));
-            setShowUpdateForm(false);
-            setShowCreateForm(false);
         } catch (err) {
-            console.log(err);
+            console.error('Error deleting medicine:', err);
         }
         setDeleteMedicineId(null);
     };
@@ -59,46 +103,44 @@ function Medicine({
 
     const columns = [
         { field: 'Medicine_ID', headerName: 'ID', flex: 1 },
-        { field: 'M_name', headerName: 'Name', flex: 1  },
-        { field: 'M_Quantity', headerName: 'Quantity', flex: 1  },
-        { field: 'M_Cost', headerName: 'Cost', flex: 1  },
-        {
-            field: 'update',
-            headerName: 'Update',
-            width: 130,
-            renderCell: (params) => (
-                <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleUpdateButtonClick(params.row.Medicine_ID)}
-                    startIcon={<Edit />}
-                >
-                </Button>
-            ),
-        },
-        {
-            field: 'delete',
-            headerName: 'Delete',
-            width: 130,
-            renderCell: (params) => (
-                <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={() => handleDelete(params.row.Medicine_ID)}
-                    startIcon={<Delete />}
-                >
-                </Button>
-            ),
-        }
+        { field: 'M_name', headerName: 'Name', flex: 1 },
+        { field: 'M_Quantity', headerName: 'Quantity', flex: 1 },
+        { field: 'M_Cost', headerName: 'Cost', flex: 1 },
+        { field: 'Patient_Name', headerName: 'Patient Name', flex: 1 },
+        ...(userRole == 'admin' ? [
+            {
+                field: 'update',
+                headerName: 'Update',
+                flex: 1,
+                renderCell: (params) => (
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => handleUpdateButtonClick(params.row.Medicine_ID)}
+                        startIcon={<Edit />}
+                    />
+                ),
+            },
+            {
+                field: 'delete',
+                headerName: 'Delete',
+                flex: 1,
+                renderCell: (params) => (
+                    <Button
+                        variant="contained"
+                        color="secondary"
+                        onClick={() => handleDelete(params.row.Medicine_ID)}
+                        startIcon={<Delete />}
+                    />
+                ),
+            }
+        ] : [])
     ];
 
     return (
         <div className='container-fluid mt-4'>
             {deleteMedicineId && (
-                <Dialog
-                    open={!!deleteMedicineId}
-                    onClose={() => setDeleteMedicineId(null)}
-                >
+                <Dialog open={!!deleteMedicineId} onClose={() => setDeleteMedicineId(null)}>
                     <DialogTitle>Confirm Deletion</DialogTitle>
                     <DialogContent>
                         <DialogContentText>
@@ -117,17 +159,14 @@ function Medicine({
             )}
 
             <Box mt={4} display="flex" alignItems="center" justifyContent="space-between">
-                <Typography variant="h6">
-                    Medicines
-                </Typography>
-                {showCreateForm ? null : (
+                <Typography variant="h6">Medicines</Typography>
+                {userRole == 'admin' && !showCreateForm && (
                     <Button
                         variant="contained"
                         color="primary"
                         onClick={handleCreateFormToggle}
                         startIcon={<Add />}
                     >
-                        Add Medicine
                     </Button>
                 )}
             </Box>

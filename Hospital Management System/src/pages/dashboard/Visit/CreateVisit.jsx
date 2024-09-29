@@ -91,17 +91,26 @@ function CreateVisit({ onClose }) {
     };
     const handleAddVisit = async () => {
         try {
-            await axios.post('http://localhost:9004/api/visit/create', formData, {
+            const response = await axios.post('http://localhost:9004/api/visit/create', formData, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            navigate('/dashboard/visit');
-            window.location.reload();
+    
+            // Navigate and reload only if the visit creation is successful
+            if (response.status === 201) {
+                navigate('/dashboard/visit');
+                window.location.reload();
+            }
         } catch (error) {
-            console.error('Error adding visit:', error);
-            setAlertMessage('Error adding visit. Please try again.');
+            // Check if the error response exists and handle it
+            if (error.response && error.response.data && error.response.data.error) {
+                setAlertMessage(error.response.data.error); // Set the error message from the backend
+            } else {
+                setAlertMessage('Error adding visit. Please try again.');
+            }
             setShowErrorModal(true);
         }
     };
+    
 
     const handleValidation = async () => {
         const { Patient_ID, Doctor_ID, date_of_visit, condition, diagnosis, therapy } = formData;

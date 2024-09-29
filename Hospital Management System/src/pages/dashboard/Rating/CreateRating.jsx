@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Modal, Box, TextField, Button, Typography, Select, MenuItem, FormHelperText } from '@mui/material';
 import ErrorModal from '../../../components/ErrorModal';
 import Cookies from 'js-cookie';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 function CreateRating({ onClose }) {
     const [formData, setFormData] = useState({
@@ -13,17 +13,25 @@ function CreateRating({ onClose }) {
         Date: new Date().toISOString().slice(0, 10), // Default to today's date
     });
     const [staff, setStaff] = useState([]);
-    const [rating, setRatings] = useState([]);
+    const [ratings, setRatings] = useState([]);
     const [staffEmail, setStaffEmail] = useState('');
     const [alertMessage, setAlertMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
     const token = Cookies.get('token'); 
 
     useEffect(() => {
         fetchStaff();
         fetchRating();
-    }, []);
+
+        // Get staff ID from location state
+        const staffid = location.state?.staffid;
+        if (staffid) {
+            setFormData((prevState) => ({ ...prevState, Emp_ID: staffid })); // Set staff ID
+            fetchStaffEmail(staffid); // Fetch email for the selected staff
+        }
+    }, [location.state]);
 
     const fetchStaff = async () => {
         try {
@@ -112,7 +120,7 @@ function CreateRating({ onClose }) {
             return;
         }
     
-        const existingRating = rating.find(rating => rating.Emp_ID === Emp_ID);
+        const existingRating = ratings.find(rating => rating.Emp_ID === Emp_ID);
         if (existingRating) {
             showAlert('Employee has already been rated');
             return;

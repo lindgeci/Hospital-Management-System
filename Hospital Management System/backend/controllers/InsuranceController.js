@@ -1,10 +1,52 @@
 const Insurance = require('../models/Insurance');
 const { Op, Sequelize } = require('sequelize'); //
+const Patient = require('../models/Patient');
+const getPatientByEmail = async (email) => {
+    try {
+        const patient = await Patient.findOne({
+            where: { Email: email }
+        });
 
+        if (!patient) {
+            throw new Error('Patient not found');
+        }
+
+        return patient;
+    } catch (error) {
+        console.error('Error fetching patient by email:', error);
+        throw error;
+    }
+};
 const FindAllInsurance = async (req, res) => {
     try {
-        const insurance = await Insurance.findAll();
-        res.json(insurance);
+        const userEmail = req.user.email;
+        const userRole = req.user.role;
+
+        let insurances;
+        if (userRole === 'admin') {
+            insurances = await Insurance.findAll({
+                include: {
+                    model: Patient // Include the Patient model to get patient details
+                },
+            });
+        } else if (userRole === 'patient') {
+            const patient = await getPatientByEmail(userEmail);
+            insurances = await Insurance.findAll({
+                where: { Patient_ID: patient.Patient_ID },
+                include: {
+                    model: Patient // Include the Patient model for the specific patient
+                },
+            });
+        } else {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const insurancesDataWithNames = insurances.map(insurance => ({
+            ...insurance.toJSON(),
+            Patient_Name: insurance.Patient ? `${insurance.Patient.Patient_Fname} ${insurance.Patient.Patient_Lname}` : 'Unknown Patient'
+        }));
+
+        res.json(insurancesDataWithNames);
     } catch (error) {
         console.error('Error fetching all insurance:', error);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -57,10 +99,10 @@ const AddInsurance = async (req, res) => {
         }
 
         // Check if this patient already has an insurance record
-        const existingInsuranceForPatient = await Insurance.findOne({ where: { Patient_ID } });
-        if (existingInsuranceForPatient) {
-            return res.status(400).json({ error: 'This patient already has an insurance record.' });
-        }
+        // const existingInsuranceForPatient = await Insurance.findOne({ where: { Patient_ID } });
+        // if (existingInsuranceForPatient) {
+        //     return res.status(400).json({ error: 'This patient already has an insurance record.' });
+        // }
 
         // Create new insurance record
         const newInsurance = await Insurance.create({
@@ -104,17 +146,17 @@ const UpdateInsurance = async (req, res) => {
         }
 
         // Check if this patient already has an insurance record excluding the current one being updated
-        const existingInsuranceForPatient = await Insurance.findOne({
-            where: {
-                Patient_ID,
-                Policy_Number: { [Op.ne]: req.params.id } // Exclude the current insurance being updated
-            }
-        });
+        // const existingInsuranceForPatient = await Insurance.findOne({
+        //     where: {
+        //         Patient_ID,
+        //         Policy_Number: { [Op.ne]: req.params.id } // Exclude the current insurance being updated
+        //     }
+        // });
 
-        // If the patient already has insurance, prevent update
-        if (existingInsuranceForPatient) {
-            return res.status(400).json({ error: 'This patient already has an insurance record.' });
-        }
+        // // If the patient already has insurance, prevent update
+        // if (existingInsuranceForPatient) {
+        //     return res.status(400).json({ error: 'This patient already has an insurance record.' });
+        // }
 
         // Check if the Ins_Code is already in use by another insurance record (excluding the current one)
         const existingInsuranceWithCode = await Insurance.findOne({

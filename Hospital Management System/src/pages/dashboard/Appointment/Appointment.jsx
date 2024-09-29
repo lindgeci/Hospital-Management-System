@@ -175,7 +175,6 @@ function Appointment({ showCreateForm, setShowCreateForm, showUpdateForm, setSho
                         onClick={handleCreateFormToggle}
                         startIcon={<Add />}
                     >
-                        Add Appointment
                     </Button>
                 )}
             </Box>

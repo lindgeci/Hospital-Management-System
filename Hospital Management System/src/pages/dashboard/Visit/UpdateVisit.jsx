@@ -111,13 +111,13 @@ function UpdateVisit({ id, onClose }) {
 
     const handleUpdateVisit = async () => {
         const { Patient_ID, Doctor_ID, date_of_visit, condition, diagnosis, therapy } = formData;
-
+    
         // Ensure all fields are filled
         if (Patient_ID === '' || Doctor_ID === '' || date_of_visit === '' || condition === '' || diagnosis === '' || therapy === '') {
             showAlert('All fields are required.');
             return;
         }
-
+    
         // Check if data has changed
         const dataChanged =
             Patient_ID !== originalData.Patient_ID ||
@@ -126,23 +126,33 @@ function UpdateVisit({ id, onClose }) {
             condition !== originalData.condition ||
             diagnosis !== originalData.diagnosis ||
             therapy !== originalData.therapy;
-
+    
         if (!dataChanged) {
             showAlert('Data must be changed before updating.');
             return;
         }
-
+    
         try {
-            await axios.put(`http://localhost:9004/api/visit/update/${id}`, formData, {
+            const response = await axios.put(`http://localhost:9004/api/visit/update/${id}`, formData, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            navigate('/dashboard/visit');
-            window.location.reload();
+    
+            // Navigate and reload only if the update is successful
+            if (response.status === 200) {
+                navigate('/dashboard/visit');
+                window.location.reload();
+            }
         } catch (error) {
-            setAlertMessage('Error updating visit.');
+            // Check if the error response exists and handle it
+            if (error.response && error.response.data && error.response.data.error) {
+                setAlertMessage(error.response.data.error); // Set the error message from the backend
+            } else {
+                setAlertMessage('Error updating visit. Please try again.');
+            }
             setShowErrorModal(true);
         }
     };
+    
 
     const showAlert = (message) => {
         setAlertMessage(message);
@@ -173,7 +183,7 @@ function UpdateVisit({ id, onClose }) {
                 value={formData.Patient_ID}
                 onChange={handleChange}
                 label="Patient"
-                disabled
+                // disabled
             >
                 <MenuItem value=""><em>Select Patient</em></MenuItem>
                 {patients.map(patient => (

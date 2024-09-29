@@ -2,6 +2,7 @@ const Bill = require('../models/Bill');
 const Medicine = require('../models/Medicine');
 const Room = require('../models/Room');
 const Patient = require('../models/Patient');
+const { Op } = require('sequelize');
 
 const getPatientByEmail = async (email) => {
     try {
@@ -77,7 +78,6 @@ const FindSingleBill = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
 const AddBill = async (req, res) => {
     try {
         const {
@@ -104,6 +104,13 @@ const AddBill = async (req, res) => {
             return res.status(400).json({ error: 'Date_Issued cannot be in the past or today' });
         }
 
+        // Check if the patient already has a bill
+        const existingBill = await Bill.findOne({ where: { Patient_ID } });
+        if (existingBill) {
+            return res.status(400).json({ error: 'A bill already exists for this patient' });
+        }
+
+        // Create new bill if no existing bill is found
         const newBill = await Bill.create({
             Patient_ID,
             Date_Issued,
@@ -111,12 +118,14 @@ const AddBill = async (req, res) => {
             Amount,
             Payment_Status
         });
+
         res.json({ success: true, message: 'Bill added successfully', data: newBill });
     } catch (error) {
         console.error('Error adding bill:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 const UpdateBill = async (req, res) => {
     try {
@@ -144,6 +153,20 @@ const UpdateBill = async (req, res) => {
             return res.status(400).json({ error: 'Date_Issued cannot be in the past or today' });
         }
 
+        // Check if the patient already has a different bill (other than the current one being updated)
+        const existingBill = await Bill.findOne({
+            where: {
+                Patient_ID,
+                Bill_ID: { [Op.ne]: req.params.id } // Exclude the current bill from the check
+            }
+        });
+
+        // If another bill exists for this patient, prevent the update
+        if (existingBill) {
+            return res.status(400).json({ error: 'This patient already has another bill' });
+        }
+
+        // Proceed with updating the current bill
         const updated = await Bill.update(
             {
                 Date_Issued,
@@ -156,15 +179,18 @@ const UpdateBill = async (req, res) => {
         );
 
         if (updated[0] === 0) {
-            res.status(404).json({ error: 'Bill not found or not updated' });
-            return;
+            return res.status(404).json({ error: 'Bill not found or not updated' });
         }
+        
         res.json({ success: true, message: 'Bill updated successfully' });
     } catch (error) {
         console.error('Error updating bill:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+
+
 
 
 

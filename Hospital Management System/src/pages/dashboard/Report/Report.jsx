@@ -3,21 +3,48 @@ import axios from 'axios';
 import { DataGrid } from '@mui/x-data-grid';
 import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 import Cookies from 'js-cookie';
-import { Add } from '@mui/icons-material';
+import { Add, Delete, Edit } from '@mui/icons-material';
 import Datetime from 'react-datetime';
 import "react-datetime/css/react-datetime.css";
-
+import { useNavigate } from 'react-router-dom';
 const CreateReport = lazy(() => import('./CreateReport'));
-
+import {jwtDecode}from 'jwt-decode';
 function Report({ showCreateForm, setShowCreateForm }) {
   const [reports, setReports] = useState([]);
   const [deleteReportId, setDeleteReportId] = useState(null);
   const token = Cookies.get('token');
-
+  const navigate = useNavigate();
+  const [userRole, setUserRole] = useState('');
   useEffect(() => {
     refreshReports();
   }, []);
 
+  const handleCreateBillButtonClick = (patientId) => {
+    setShowCreateForm(true);
+    navigate('/dashboard/bills', { state: { patientId, showCreateForm: true } });
+};
+
+useEffect(() => {
+  const fetchUserRole = async () => {
+      try {
+          const decodedToken = jwtDecode(token);
+          const userEmail = decodedToken.email;
+          
+          const userResponse = await axios.get('http://localhost:9004/api/users', {
+              headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const currentUser = userResponse.data.find(user => user.email === userEmail);
+          const role = currentUser.role;
+          // console.log(currentUser);
+          // console.log('User Role:', role); // Debug log to verify the user role
+          setUserRole(role);
+      } catch (err) {
+          console.error('Error fetching user role:', err.response ? err.response.data : err.message);
+      }
+  };
+
+  fetchUserRole();
+}, [token]);
   const refreshReports = async () => {
     try {
       const res = await axios.get('http://localhost:9004/api/report/fetch-reports', {
@@ -114,11 +141,31 @@ function Report({ showCreateForm, setShowCreateForm }) {
           variant="contained"
           color="secondary"
           onClick={() => handleDelete(params.row.Report_ID)}
+          startIcon={<Delete />}
         >
-          Delete
+
         </Button>
       ),
     },
+    {
+      field: 'createBill',
+      headerName: 'Bill', // Updated label
+      flex: 1,
+      renderCell: (params) => (
+          <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => handleCreateBillButtonClick  (params.row.Patient_ID)}
+              startIcon={
+                <svg data-slot="icon" fill="none" strokeWidth="1.5" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 0 0-2.25-2.25H15a3 3 0 1 1-6 0H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3"></path>
+              </svg>
+              }
+          >
+              
+          </Button>
+      )
+  }
   ];
 
   return (
@@ -156,7 +203,6 @@ function Report({ showCreateForm, setShowCreateForm }) {
             onClick={handleCreateFormToggle}
             startIcon={<Add />}
           >
-            Create Report
           </Button>
         )}
       </Box>
