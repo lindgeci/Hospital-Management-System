@@ -1,6 +1,10 @@
 const MedicalHistory = require('../models/MedicalHistory');
 const Patient = require('../models/Patient');
 const { Op } = require('sequelize'); 
+const Staff = require('../models/Staff');
+const Doctor = require('../models/Doctor');
+const Bill = require('../models/Bill');
+const Visit = require('../models/Visits'); 
 const getPatientByEmail = async (email) => {
     try {
         const patient = await Patient.findOne({
@@ -17,7 +21,32 @@ const getPatientByEmail = async (email) => {
         throw error;
     }
 };
+const getDoctorByEmail = async (email) => {
+    try {
+        // Fetch the staff member with the given email
+        const staff = await Staff.findOne({
+            where: { Email: email } // Check the email in the Staff table
+        });
 
+        if (!staff) {
+            throw new Error('Staff member not found');
+        }
+
+        // Fetch the doctor associated with the staff member
+        const doctor = await Doctor.findOne({
+            where: { Emp_ID: staff.Emp_ID } // Use Emp_ID to find the associated doctor
+        });
+
+        if (!doctor) {
+            throw new Error('Doctor not found');
+        }
+
+        return doctor;
+    } catch (error) {
+        console.error('Error fetching doctor by email:', error);
+        throw error;
+    }
+};
 const FindAllMedicalHistorys = async (req, res) => {
     try {
         const userEmail = req.user.email;
@@ -25,20 +54,52 @@ const FindAllMedicalHistorys = async (req, res) => {
 
         let medicalHistories;
         if (userRole === 'admin') {
+            // Admin can see all medical histories
             medicalHistories = await MedicalHistory.findAll({
                 include: {
-                    model: Patient
+                    model: Patient,
+                    attributes: ['Patient_Fname', 'Patient_Lname']
                 },
             });
         } else if (userRole === 'patient') {
+            // Patient can see their own medical histories
             const patient = await getPatientByEmail(userEmail);
             medicalHistories = await MedicalHistory.findAll({
                 where: { Patient_ID: patient.Patient_ID },
                 include: {
-                    model: Patient
+                    model: Patient,
+                    attributes: ['Patient_Fname', 'Patient_Lname']
                 },
             });
+        } else if (userRole === 'doctor') {
+            // Fetch doctor based on email
+            const doctor = await getDoctorByEmail(userEmail);
+
+            // Fetch visits for patients treated by the logged-in doctor
+            const visits = await Visit.findAll({
+                where: { Doctor_ID: doctor.Doctor_ID }, // Filter visits by the logged-in doctor
+                include: [
+                    {
+                        model: Patient, // Include Patient details
+                        attributes: ['Patient_ID'] // Only include Patient_ID for filtering
+                    }
+                ],
+            });
+
+            const patientIds = visits.map(visit => visit.Patient.Patient_ID); // Get patient IDs from visits
+
+            // Fetch medical histories associated with patients who have visits
+            medicalHistories = await MedicalHistory.findAll({
+                where: {
+                    Patient_ID: patientIds // Only get medical histories for patients who have visits
+                },
+                include: {
+                    model: Patient,
+                    attributes: ['Patient_Fname', 'Patient_Lname']
+                }
+            });
         } else {
+            // If the user role is not recognized, return forbidden
             return res.status(403).json({ error: 'Forbidden' });
         }
 
@@ -53,6 +114,7 @@ const FindAllMedicalHistorys = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 const FindSingleMedicalHistory = async (req, res) => {
     try {

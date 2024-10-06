@@ -10,6 +10,9 @@ const Staff = require('../models/Staff');
 const outputFilePath = path.join(__dirname, '../result.pdf');
 const Doctor = require('../models/Doctor');
 const Patient = require('../models/Patient');
+const sequelize = require('../config/database'); 
+const Bill = require('../models/Bill')
+const Visit = require('../models/Visits')
 // Email configuration
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -60,6 +63,63 @@ const getDoctorByEmail = async (email) => {
         throw error;
     }
 };
+const fetchReportsFromDB = async (req, res) => {
+    try {
+        const userEmail = req.user.email;
+        const userRole = req.user.role;
+
+        let reports = [];
+        let visits = [];
+        
+        if (userRole === 'admin') {
+            // Fetch all reports for admin
+            reports = await PdfReport.findAll({
+                include: [
+                    {
+                        model: Patient, // Include Patient details
+                    },
+                ],
+            });
+        } else if (userRole === 'doctor') {
+            // Fetch doctor based on email
+            const doctor = await getDoctorByEmail(userEmail); 
+
+            // Fetch visits for patients treated by the logged-in doctor
+            visits = await Visit.findAll({
+                where: { Doctor_ID: doctor.Doctor_ID }, // Filter visits by the logged-in doctor
+                include: [
+                    {
+                        model: Patient, // Include Patient details
+                    }
+                ],
+            });
+
+            const patientIds = visits.map(visit => visit.Patient_ID); // Get patient IDs from visits
+
+            // Fetch reports associated with patients of this doctor
+            reports = await PdfReport.findAll({
+                where: {
+                    Patient_ID: patientIds // Only get reports for patients treated by this doctor
+                },
+                include: [
+                    {
+                        model: Patient, // Include Patient details
+                    }
+                ],
+            });
+        } else {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        // Send the fetched reports and visits as a response
+        res.json({ reports, visits });
+    } catch (error) {
+        console.error('Error fetching reports and visits from database:', error);
+        res.status(500).json({ error: 'Error fetching reports and visits from database' });
+    }
+};
+
+
 const findAllReports = async (req, res) => {
     try {
         const userEmail = req.user.email;
@@ -159,15 +219,16 @@ const createPdf = async (req, res) => {
     console.log('Request Body:', req.body); // Add this line
     try {
         const {
-            personalNumber, patientName, age, patientGender, bloodType, diagnosis,
+            personalNumber, patientName, age, patientGender, bloodType, Time, doctorEmail,
             doctorName, email, phone, condition, therapy, dateOfVisit, roomCost,medicineCost  // Include roomCost
         } = req.body;
 
         // Print the entire roomCost value
         console.log('Room Cost:', roomCost); // Print roomCost here
         console.log('Room Cost:', medicineCost)
+        console.log('Doctor Email:', doctorEmail)
         const htmlContent = pdfTemplate({
-            personalNumber, patientName, age, patientGender, bloodType, diagnosis,
+            personalNumber, patientName, age, patientGender, bloodType, Time, doctorEmail,
             doctorName, email, phone, condition, therapy, dateOfVisit, roomCost, medicineCost // Pass roomCost to template
         });
 
@@ -311,27 +372,43 @@ const saveReportToDB = async (req, res) => {
     }
 };
 
-const fetchReportsFromDB = async (req, res) => {
-    try {
-        const reports = await PdfReport.findAll();
-        res.json(reports);
-    } catch (error) {
-        console.error('Error fetching reports from database:', error);
-        res.status(500).json({ error: 'Error fetching reports from database' });
-    }
-};
+
 
 const deleteReport = async (req, res) => {
+    const transaction = await sequelize.transaction(); // Start a transaction
     try {
-        const deleted = await Report.destroy({
+        // Find the report to get the associated patient ID
+        const report = await Report.findOne({
             where: { Report_ID: req.params.id },
+            transaction // Use the transaction for this query
         });
-        if (deleted === 0) {
+
+        if (!report) {
             return res.status(404).json({ error: 'Report not found' });
         }
-        res.json({ success: true, message: 'Report deleted successfully' });
+
+        // Retrieve the associated patient ID
+        const patientId = report.Patient_ID; // Adjust this line based on your Report model
+
+        // Delete the associated bill for the patient
+        const deletedBill = await Bill.destroy({
+            where: { Patient_ID: patientId },
+            transaction // Use the transaction for this delete
+        });
+
+        // Delete the report
+        const deletedReport = await Report.destroy({
+            where: { Report_ID: req.params.id },
+            transaction // Use the transaction for this delete
+        });
+
+        // Commit the transaction if both deletes were successful
+        await transaction.commit();
+
+        res.json({ success: true, message: 'Report and associated bill deleted successfully' });
     } catch (error) {
-        console.error('Error deleting report:', error);
+        await transaction.rollback(); // Roll back the transaction on error
+        console.error('Error deleting report or bill:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };

@@ -180,12 +180,12 @@ const loginUser = async (req, res) => {
 
 const registerUser = async (req, res) => {
     try {
-        const { email, username, password, role } = req.body;
+        const { email, username, password } = req.body;
 
         console.log(req.body);
 
         // Validate required fields
-        if (!email || !username || !password ) {
+        if (!email || !username || !password) {
             return res.status(400).json({ message: 'Email, username, and password are required' });
         }
 
@@ -221,6 +221,12 @@ const registerUser = async (req, res) => {
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Automatically assign role 'doctor' if the email contains a period before the '@'
+        let assignedRole = 'patient'; // Default to 'patient'
+        if (email.indexOf('.') !== -1 && email.indexOf('@') !== -1 && email.lastIndexOf('.', email.indexOf('@')) !== -1) {
+            assignedRole = 'doctor'; // Assign 'doctor' role
+        }
+
         // Create new user
         const newUser = await User.create({
             email,
@@ -228,19 +234,21 @@ const registerUser = async (req, res) => {
             password: hashedPassword,
         });
 
-        const defaultRole = await Role.findOne({ where: { role_name: 'patient' } });
-        if (!defaultRole) {
+        // Find the role by name
+        const role = await Role.findOne({ where: { role_name: assignedRole } });
+        if (!role) {
             return res.status(500).json({ message: 'Default role not found' });
         }
 
+        // Assign the role to the user
         await UserRole.create({
             user_id: newUser.user_id,
-            role_id: defaultRole.role_id,
+            role_id: role.role_id,
         });
 
         // Generate JWT token
-        // const token = jwt.sign({ userId: newUser.id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
         const token = generateJWTToken(newUser);
+
         // Send welcome email
         const mailOptions = {
             from: process.env.GMAIL_USER,
@@ -275,6 +283,7 @@ LIFELINE Hospital Team`
         res.status(500).json({ message: 'Internal server error' });
     }
 };
+
 
 
 module.exports = { loginUser, registerUser, setExpirationTimer, getExpirationTime, setJwtExpirationTimer, getExpirationTimeJWT};

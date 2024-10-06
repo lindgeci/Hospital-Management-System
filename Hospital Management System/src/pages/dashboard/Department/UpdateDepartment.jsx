@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
-import { Modal, Box, TextField, Button, Typography, InputAdornment } from '@mui/material';
+import { Modal, Box, TextField, Button, Typography, FormControl ,FormHelperText , InputLabel , MenuItem ,Select, InputAdornment } from '@mui/material';
 import ErrorModal from '../../../components/ErrorModal';
 import Cookies from 'js-cookie';
 
@@ -123,19 +123,23 @@ function UpdateDepartment({ id, onClose }) {
                     helperText="Enter the name of the department head (at least 2 characters)."
                 />
                 
-                <TextField
-                    margin="dense"
-                    fullWidth
-                    label="Department Name"
-                    variant="outlined"
-                    id="Dept_name"
-                    name="Dept_name"
-                    type="text"
-                    value={formData.Dept_name}
-                    onChange={handleChange}
-                    disabled
-                    helperText="Enter the department name (cannot contain numbers)."
-                />
+                <FormControl fullWidth variant="outlined" margin="dense" disabled>
+    <InputLabel id="department-select-label">Department Name</InputLabel>
+    <Select
+        labelId="department-select-label"
+        name="Dept_name"
+        value={formData.Dept_name}
+        onChange={handleChange}
+        label="Department Name"
+    >
+        <MenuItem value=""><em>Select Department</em></MenuItem>
+        <MenuItem value="Dermatology">Dermatology</MenuItem>
+        <MenuItem value="Neurology">Neurology</MenuItem>
+        <MenuItem value="Pediatrics">Pediatrics</MenuItem>
+    </Select>
+    <FormHelperText>Enter the department name (cannot contain numbers).</FormHelperText>
+</FormControl>
+
                 
                 <TextField
                     margin="dense"

@@ -99,7 +99,7 @@ function Room({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdate
         { field: 'Room_type', headerName: 'Room Type', flex: 1 },
         { field: 'Patient_Name', headerName: 'Patient Name', flex: 1 },
         { field: 'Room_cost', headerName: 'Cost (€)', flex: 1 },
-        ...(userRole == 'admin' ? [
+        ...(userRole !== 'patient' ? [
         {
             
             field: 'update',
@@ -115,6 +115,8 @@ function Room({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdate
                 </Button>
             )
         },
+    ] : []),
+    ...(userRole == 'admin' ? [
         {
             field: 'delete',
             headerName: 'Delete',

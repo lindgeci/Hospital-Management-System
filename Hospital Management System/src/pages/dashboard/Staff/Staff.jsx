@@ -6,7 +6,7 @@ import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, D
 import Cookies from 'js-cookie';
 import { Add, Delete, Edit } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-
+import { jwtDecode } from 'jwt-decode';
 function Staff({
     showCreateForm,
     setShowCreateForm,
@@ -19,11 +19,34 @@ function Staff({
     const [searchQuery, setSearchQuery] = useState('');
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const token = Cookies.get('token');
+    const [userRole, setUserRole] = useState('');
     const navigate = useNavigate();
     const handleCreateRatingButtonClick = (staffid) => {
         setShowCreateForm(true);
         navigate('/dashboard/rating', { state: { staffid, showCreateForm: true } });
     };
+
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+                const decodedToken = jwtDecode(token);
+                const userEmail = decodedToken.email;
+                
+                const userResponse = await axios.get('http://localhost:9004/api/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const currentUser = userResponse.data.find(user => user.email === userEmail);
+                const role = currentUser.role;
+                console.log(currentUser);
+                console.log('User Role:', role); // Debug log to verify the user role
+                setUserRole(role);
+            } catch (err) {
+                console.error('Error fetching user role:', err.response ? err.response.data : err.message);
+            }
+        };
+
+        fetchUserRole();
+    }, [token]);
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -118,6 +141,7 @@ function Staff({
                 </Button>
             )
         },
+        ...(userRole  == 'admin' ? [
         {
             field: 'delete',
             headerName: 'Delete',
@@ -132,6 +156,7 @@ function Staff({
                 </Button>
             )
         },
+   
         {
             field: 'createRating',
             headerName: 'Rating',
@@ -151,6 +176,7 @@ function Staff({
                 </Button>
             )
         }
+    ] : []),
     ];
 
     return (

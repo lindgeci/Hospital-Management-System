@@ -3,7 +3,7 @@ import axios from 'axios';
 import { DataGrid } from '@mui/x-data-grid';
 import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 import Cookies from 'js-cookie';
-import { Add, Delete, Edit } from '@mui/icons-material';
+import { Add, Delete, Edit,Paid } from '@mui/icons-material';
 import {jwtDecode} from 'jwt-decode';
 import { useLocation } from 'react-router-dom';
 
@@ -137,7 +137,23 @@ function Bill({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdate
                     </Button>
                 )
             }
-        ] : [])
+        ] : []),
+        ...(userRole == 'patient' ? [
+        {
+            field: 'Pay',
+            headerName: 'Pay',
+            flex: 1,
+            renderCell: (params) => (
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleDelete(params.row.Bill_ID)}
+                    startIcon={<Paid />}
+                >
+                </Button>
+            )
+        },
+    ] : []),
     ];
 
     return (
@@ -147,18 +163,24 @@ function Bill({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdate
                     open={!!deleteBillId}
                     onClose={() => setDeleteBillId(null)}
                 >
-                    <DialogTitle>Confirm Deletion</DialogTitle>
-                    <DialogContent>
-                        <DialogContentText>
-                            Are you sure you want to delete this bill?
-                        </DialogContentText>
-                    </DialogContent>
+        <DialogTitle>Confirm {userRole === 'patient' ? 'Payment' : 'Deletion'}</DialogTitle>
+        <DialogContent>
+            <DialogContentText>
+                {userRole === 'patient' ? 
+                    'Are you sure you want to pay this bill?' : 
+                    'Are you sure you want to delete this bill?'
+                }
+            </DialogContentText>
+        </DialogContent>
                     <DialogActions>
+                        
                         <Button onClick={() => setDeleteBillId(null)} color="primary">
                             Cancel
                         </Button>
                         <Button onClick={handleDeleteConfirm} color="secondary">
-                            Delete
+                        {userRole === 'patient' ? 
+                            'Pay' :'Delete'
+                        }
                         </Button>
                     </DialogActions>
                 </Dialog>
@@ -168,7 +190,7 @@ function Bill({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpdate
                 <Typography variant="h6" style={{ marginRight: 'auto' }}>
                     Bills
                 </Typography>
-                {userRole !== 'patient' && !showCreateForm && (
+                {userRole == 'admin' && !showCreateForm && (
                     <Button
                         variant="contained"
                         color="primary"

@@ -1,13 +1,64 @@
 const Ratingg = require('../models/Rating');
+const Staff = require('../models/Staff');
+
+const getStaffByEmail = async (email) => {
+    try {
+        const staff = await Staff.findOne({
+            where: { Email: email }
+        });
+
+        if (!staff) {
+            throw new Error('Staff not found');
+        }
+
+        return staff;
+    } catch (error) {
+        console.error('Error fetching staff by email:', error);
+        throw error;
+    }
+};
 
 const FindAllRating = async (req, res) => {
     try {
-        const rating = await Ratingg.findAll();
-        res.json(rating);
+        const userEmail = req.user.email;  // Get the logged-in user's email
+        const userRole = req.user.role;     // Get the logged-in user's role
+
+        let ratings;
+        if (userRole === 'admin') {
+            // Admin can see all ratings
+            ratings = await Ratingg.findAll({
+                include: {
+                    model: Staff, // Include staff details
+                },
+            });
+        } else if (userRole === 'doctor') {
+            // Fetch ratings for the logged-in staff member
+            const staff = await getStaffByEmail(userEmail);
+            ratings = await Ratingg.findAll({
+                where: { Emp_ID: staff.Emp_ID }, // Filter by Emp_ID
+                include: {
+                    model: Staff, // Include staff details
+                },
+            });
+        } else {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const ratingsDataWithStaffNames = ratings.map(rating => ({
+            ...rating.toJSON(),
+            Staff_Name: rating.Staff ? `${rating.Staff.Staff_Fname} ${rating.Staff.Staff_Lname}` : 'Unknown Staff'
+        }));
+
+        res.json(ratingsDataWithStaffNames);
     } catch (error) {
         console.error('Error fetching all ratings:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
+};
+
+module.exports = {
+    FindAllRating,
+    getStaffByEmail,
 };
 
 const FindSingleRating = async (req, res) => {

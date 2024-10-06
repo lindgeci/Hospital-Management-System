@@ -1,15 +1,57 @@
 const Department = require('../models/Department');
-const { Op } = require('sequelize');
+const Staff = require('../models/Staff');
 
-    const FindAllDepartments = async (req, res) => {
-        try {
-            const departments = await Department.findAll();
-            res.json(departments);
-        } catch (error) {
-            console.error('Error fetching all departments:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+const getStaffByEmail = async (email) => {
+    try {
+        const staff = await Staff.findOne({
+            where: { Email: email }
+        });
+
+        if (!staff) {
+            throw new Error('Staff not found');
         }
-    };
+
+        return staff;
+    } catch (error) {
+        console.error('Error fetching staff by email:', error);
+        throw error;
+    }
+};
+
+const FindAllDepartments = async (req, res) => {
+    try {
+        const userEmail = req.user.email; // Get the user's email from the request
+        const userRole = req.user.role; // Get the user's role from the request
+
+        // If user is a doctor or any staff, fetch their department
+        if (userRole === 'doctor' ) {
+            // const staff = await getStaffByEmail(userEmail); // Fetch staff by email
+            // const departments = await Department.findAll({
+            //     where: { Dept_ID: staff.Dept_ID }, // Filter by the staff's department ID
+            // });
+            const departments = await Department.findAll();
+            return res.json(departments); // Return the found departments
+        }
+
+        // If user is an admin, return all departments
+        if (userRole === 'admin') {
+            const departments = await Department.findAll();
+            return res.json(departments);
+        }
+
+        return res.status(403).json({ error: 'Forbidden' });
+    } catch (error) {
+        console.error('Error fetching departments:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+
+// module.exports = {
+//     FindAllDepartments,
+//     getStaffByEmail,
+// };
+
 
     const FindSingleDepartment = async (req, res) => {
         try {

@@ -99,7 +99,7 @@ function MedicalHistory({ showCreateForm, setShowCreateForm, showUpdateForm, set
         { field: 'Patient_Name', headerName: 'Patient Name', flex: 1 },
         { field: 'Allergies', headerName: 'Allergies', flex: 1 },
         { field: 'Pre_Conditions', headerName: 'Pre Conditions', flex: 1 },
-       
+        ...(userRole !== 'doctor' ? [
             {
                 field: 'update',
                 headerName: 'Update',
@@ -114,6 +114,7 @@ function MedicalHistory({ showCreateForm, setShowCreateForm, showUpdateForm, set
                     </Button>
                 )
             },
+        ] : []),
             ...(userRole == 'admin' ? [
             {
                 field: 'delete',
@@ -160,7 +161,7 @@ function MedicalHistory({ showCreateForm, setShowCreateForm, showUpdateForm, set
                 <Typography variant="h6" style={{ marginRight: 'auto' }}>
                     Medical Histories
                 </Typography>
-                {userRole == 'admin' && !showCreateForm && (
+                {userRole !== 'doctor' && !showCreateForm && (
                     <Button
                         variant="contained"
                         color="primary"

@@ -45,26 +45,34 @@ useEffect(() => {
 
   fetchUserRole();
 }, [token]);
-  const refreshReports = async () => {
+const refreshReports = async () => {
     try {
-      const res = await axios.get('http://localhost:9004/api/report/fetch-reports', {
-        headers: {
-          Authorization: `Bearer ${token}`
+        const res = await axios.get('http://localhost:9004/api/report/fetch-reports', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        // Check if res.data.reports is an array
+        if (!Array.isArray(res.data.reports)) {
+            throw new Error("Reports data is not an array");
         }
-      });
-      const reportsWithUrls = res.data.map(report => {
-        const uint8Array = new Uint8Array(report.report.data);
-        const blob = new Blob([uint8Array], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        const createdAt = report.created_at ? new Date(report.created_at) : null;
-        console.log(`Report ID: ${report.Report_ID}, Created At: ${createdAt}`); // Debug log
-        return { ...report, pdfUrl: url, created_at: createdAt };
-      });
-      setReports(reportsWithUrls);
+
+        const reportsWithUrls = res.data.reports.map(report => {
+            const uint8Array = new Uint8Array(report.report.data);
+            const blob = new Blob([uint8Array], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const createdAt = report.created_at ? new Date(report.created_at) : null;
+            console.log(`Report ID: ${report.Report_ID}, Created At: ${createdAt}`); // Debug log
+            return { ...report, pdfUrl: url, created_at: createdAt };
+        });
+
+        setReports(reportsWithUrls);
     } catch (err) {
-      console.error('Error fetching reports:', err);
+        console.error('Error fetching reports:', err.response ? err.response.data : err.message);
     }
-  };
+};
+
 
   const handleDelete = async (id) => {
     setDeleteReportId(id);

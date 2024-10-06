@@ -12,7 +12,7 @@ function CreateVisit({ onClose }) {
         Doctor_ID: '',
         date_of_visit: '',
         condition: '',
-        diagnosis: '',
+        Time:'',
         therapy: '',
     });
     const [patients, setPatients] = useState([]);
@@ -113,9 +113,9 @@ function CreateVisit({ onClose }) {
     
 
     const handleValidation = async () => {
-        const { Patient_ID, Doctor_ID, date_of_visit, condition, diagnosis, therapy } = formData;
+        const { Patient_ID, Doctor_ID, date_of_visit, condition, Time, therapy } = formData;
 
-        if (Patient_ID === '' || Doctor_ID === '' || date_of_visit === '' || condition === '' || diagnosis === '' || therapy === '') {
+        if (Patient_ID === '' || Doctor_ID === '' || date_of_visit === '' || condition === '' || Time === '' || therapy === '') {
             showAlert('All fields are required');
             return;
         }
@@ -135,6 +135,17 @@ function CreateVisit({ onClose }) {
     const getTodayDate = () => {
         const today = new Date();
         return today.toISOString().split('T')[0];  // Returns yyyy-mm-dd format
+    };
+
+    const generateTimeOptions = () => {
+        const options = [];
+        for (let hour = 0; hour < 24; hour++) {
+            for (let minute = 0; minute < 60; minute += 30) {
+                const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                options.push(time);
+            }
+        }
+        return options;
     };
 
     return (
@@ -240,20 +251,23 @@ function CreateVisit({ onClose }) {
         </FormControl>
 
         <FormControl fullWidth margin="dense" variant="outlined">
-            <InputLabel id="diagnosis-label">Diagnosis</InputLabel>
+            <InputLabel id="Time-label">Time</InputLabel>
             <Select
-                labelId="diagnosis-label"
-                id="diagnosis"
-                name="diagnosis"
-                value={formData.diagnosis}
+                labelId="Time-label"
+                id="Time"
+                name="Time"
+                value={formData.Time}
                 onChange={handleChange}
-                label="Diagnosis"
+                label="Time"
             >
-                <MenuItem value="Diagnosis A">Diagnosis A</MenuItem>
-                <MenuItem value="Diagnosis B">Diagnosis B</MenuItem>
-                <MenuItem value="Diagnosis C">Diagnosis C</MenuItem>
+               <MenuItem value=""><em>Select Time</em></MenuItem>
+        {generateTimeOptions().map((time) => (
+            <MenuItem key={time} value={time}>
+                {time}
+            </MenuItem>
+        ))}
             </Select>
-            <FormHelperText>Select the diagnosis given by the doctor</FormHelperText>
+            <FormHelperText>Select the time given by the doctor</FormHelperText>
         </FormControl>
 
         <FormControl fullWidth margin="dense" variant="outlined">

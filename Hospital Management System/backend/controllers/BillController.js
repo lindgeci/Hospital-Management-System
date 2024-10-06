@@ -1,9 +1,112 @@
+// const Bill = require('../models/Bill');
+// const Medicine = require('../models/Medicine');
+// const Room = require('../models/Room');
+// const Visit = require('../models/Visits');  // Assuming you have a Visit model
+// const sequelize = require('../config/database');  // Import your sequelize instance
+// const Patient = require('../models/Patient');
+// const { Op } = require('sequelize');
+
 const Bill = require('../models/Bill');
 const Medicine = require('../models/Medicine');
 const Room = require('../models/Room');
+const Visit = require('../models/Visits');  // Assuming you have a Visit model
+const PdfReport = require('../models/PdfReport');  // Assuming you have a Report model
+const sequelize = require('../config/database');  // Import your sequelize instance
 const Patient = require('../models/Patient');
 const { Op } = require('sequelize');
+const Staff = require('../models/Staff');
+const Doctor = require('../models/Doctor');
 
+const DeleteBill = async (req, res) => {
+    const transaction = await sequelize.transaction();  // Start a transaction
+
+    try {
+        // Find the bill to get the associated patient ID
+        const bill = await Bill.findOne({
+            where: { Bill_ID: req.params.id },
+            transaction, // Use the transaction for this query
+        });
+
+        if (!bill) {
+            return res.status(404).json({ error: 'Bill not found' });
+        }
+
+        const patientId = bill.Patient_ID;
+
+        // Delete the bill
+        const deletedBill = await Bill.destroy({
+            where: { Bill_ID: req.params.id },
+            transaction, // Use the transaction for this delete
+        });
+
+        if (deletedBill === 0) {
+            await transaction.rollback();
+            return res.status(404).json({ error: 'Bill not found' });
+        }
+
+        // Delete the associated visit for the same patient
+        const deletedVisit = await Visit.destroy({
+            where: { Patient_ID: patientId },
+            transaction, // Use the transaction for this delete
+        });
+
+        // Delete associated room for the patient
+        await Room.destroy({
+            where: { Patient_ID: patientId },
+            transaction, // Use the transaction for this delete
+        });
+
+        // Delete associated medicines for the patient
+        await Medicine.destroy({
+            where: { Patient_ID: patientId },
+            transaction, // Use the transaction for this delete
+        });
+
+        // Delete associated report for the patient
+        await PdfReport.destroy({
+            where: { Patient_ID: patientId },
+            transaction, // Use the transaction for this delete
+        });
+
+        // Commit the transaction if all deletes were successful
+        await transaction.commit();
+
+        res.json({ success: true, message: 'Bill, associated visit, room, medicines, and report deleted successfully' });
+    } catch (error) {
+        // Roll back the transaction on error
+        await transaction.rollback();
+        console.error('Error deleting bill, visit, room, medicines, or report:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+
+const getDoctorByEmail = async (email) => {
+    try {
+        // Fetch the staff member with the given email
+        const staff = await Staff.findOne({
+            where: { Email: email } // Check the email in the Staff table
+        });
+
+        if (!staff) {
+            throw new Error('Staff member not found');
+        }
+
+        // Fetch the doctor associated with the staff member
+        const doctor = await Doctor.findOne({
+            where: { Emp_ID: staff.Emp_ID } // Use Emp_ID to find the associated doctor
+        });
+
+        if (!doctor) {
+            throw new Error('Doctor not found');
+        }
+
+        return doctor;
+    } catch (error) {
+        console.error('Error fetching doctor by email:', error);
+        throw error;
+    }
+};
 const getPatientByEmail = async (email) => {
     try {
         const patient = await Patient.findOne({
@@ -28,6 +131,7 @@ const FindAllBills = async (req, res) => {
 
         let bills;
         if (userRole === 'admin') {
+            // Admin can see all bills
             bills = await Bill.findAll({
                 include: [
                     {
@@ -37,6 +141,7 @@ const FindAllBills = async (req, res) => {
                 ]
             });
         } else if (userRole === 'patient') {
+            // Patient can see their own bills
             const patient = await getPatientByEmail(userEmail);
             bills = await Bill.findAll({
                 where: { Patient_ID: patient.Patient_ID },
@@ -47,7 +152,37 @@ const FindAllBills = async (req, res) => {
                     }
                 ]
             });
+        } else if (userRole === 'doctor') {
+            // Fetch doctor based on email
+            const doctor = await getDoctorByEmail(userEmail);
+
+            // Fetch visits for patients treated by the logged-in doctor
+            const visits = await Visit.findAll({
+                where: { Doctor_ID: doctor.Doctor_ID }, // Filter visits by the logged-in doctor
+                include: [
+                    {
+                        model: Patient, // Include Patient details
+                        attributes: ['Patient_ID'] // Only include Patient_ID for filtering
+                    }
+                ],
+            });
+
+            const patientIds = visits.map(visit => visit.Patient.Patient_ID); // Get patient IDs from visits
+
+            // Fetch bills associated with patients who have visits
+            bills = await Bill.findAll({
+                where: {
+                    Patient_ID: patientIds // Only get bills for patients who have visits
+                },
+                include: [
+                    {
+                        model: Patient,
+                        attributes: ['Patient_Fname', 'Patient_Lname']
+                    }
+                ]
+            });
         } else {
+            // If the user role is not recognized, return forbidden
             return res.status(403).json({ error: 'Forbidden' });
         }
 
@@ -62,6 +197,9 @@ const FindAllBills = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
+
+
 
 const FindSingleBill = async (req, res) => {
     try {
@@ -195,21 +333,6 @@ const UpdateBill = async (req, res) => {
 
 
 
-const DeleteBill = async (req, res) => {
-    try {
-        const deleted = await Bill.destroy({
-            where: { Bill_ID: req.params.id },
-        });
-        if (deleted === 0) {
-            res.status(404).json({ error: 'Bill not found' });
-            return;
-        }
-        res.json({ success: true, message: 'Bill deleted successfully' });
-    } catch (error) {
-        console.error('Error deleting bill:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-};
 
 module.exports = {
     FindAllBills,

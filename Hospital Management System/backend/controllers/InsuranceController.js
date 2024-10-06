@@ -92,17 +92,11 @@ const AddInsurance = async (req, res) => {
             return res.status(400).json({ error: 'Provider cannot be empty' });
         }
 
-        // Check if the insurance code is already used by any patient
+        // Check if the insurance code is already used by any patient except the current one
         const existingInsuranceWithCode = await Insurance.findOne({ where: { Ins_Code } });
-        if (existingInsuranceWithCode) {
-            return res.status(400).json({ error: 'This insurance code is already in use.' });
+        if (existingInsuranceWithCode && existingInsuranceWithCode.Patient_ID !== Patient_ID) {
+            return res.status(400).json({ error: 'This insurance code is already in use by another patient.' });
         }
-
-        // Check if this patient already has an insurance record
-        // const existingInsuranceForPatient = await Insurance.findOne({ where: { Patient_ID } });
-        // if (existingInsuranceForPatient) {
-        //     return res.status(400).json({ error: 'This patient already has an insurance record.' });
-        // }
 
         // Create new insurance record
         const newInsurance = await Insurance.create({
@@ -119,6 +113,7 @@ const AddInsurance = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 const UpdateInsurance = async (req, res) => {
     try {

@@ -60,11 +60,16 @@ function CreatePatient({ onClose }) {
             navigate('/dashboard/patient');
             window.location.reload();
         } catch (error) {
+            if (error.response && error.response.data.error === 'Email, phone number, or personal number already exists.') {
+                setAlertMessage('A patient with the same email, phone number, or personal number already exists.');
+            } else {
+                setAlertMessage('Error adding patient. Please try again.');
+            }
             console.error('Error adding Patient:', error.response ? error.response.data : error.message);
-            setAlertMessage('Error adding patient. Please try again.');
             setShowErrorModal(true);
         }
     };
+    
 
     const handleValidation = () => {
         const { Personal_Number, Patient_Fname, Patient_Lname, Birth_Date, Blood_type, Email, Gender, Phone } = formData;

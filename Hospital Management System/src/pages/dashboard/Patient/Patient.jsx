@@ -52,10 +52,14 @@ function Patient({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpd
             try {
                 const decodedToken = jwtDecode(token);
                 const userEmail = decodedToken.email;
-
-                const userResponse = await axios.get('http://localhost:9004/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+                
+                const userResponse = await axios.get('http://localhost:9004/api/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 const currentUser = userResponse.data.find(user => user.email === userEmail);
                 const role = currentUser.role;
+                console.log(currentUser);
+                console.log('User Role:', role); // Debug log to verify the user role
                 setUserRole(role);
             } catch (err) {
                 console.error('Error fetching user role:', err.response ? err.response.data : err.message);
@@ -138,7 +142,8 @@ function Patient({ showCreateForm, setShowCreateForm, showUpdateForm, setShowUpd
                     >
                     </Button>
                 )
-            },
+            },] : []),
+            ...(userRole == 'admin' ? [
             {
                 field: 'delete',
                 headerName: 'Delete',

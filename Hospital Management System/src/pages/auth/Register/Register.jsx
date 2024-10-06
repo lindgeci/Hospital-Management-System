@@ -18,33 +18,28 @@ const Register = () => {
     const navigate = useNavigate();
 
     const createUser = () => {
-        // Regular expressions for email, username, and password format validation
         const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z-]+\.[a-z]{3}$/;
         const usernameRegex = /^[a-zA-Z]{2,}$/;
         const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])[0-9a-zA-Z!@#$%^&*()\-_=+`~{}\[\]|\\:;"'<>,.?\/]{6,}$/;
     
-        // Check if any of the fields are empty
         if (!email || !userName || !password) {
             setErrorMessage('All fields are required');
-            return; // Stop further execution
+            return;
         }
     
-        // Check if email format is valid
         if (!emailRegex.test(email)) {
             setErrorMessage('Invalid email format');
-            return; // Stop further execution
+            return;
         }
     
-        // Check if username format is valid
         if (!usernameRegex.test(userName)) {
             setErrorMessage('Username must be at least 2 characters long and contain only letters');
-            return; // Stop further execution
+            return;
         }
     
-        // Check if password format is valid
         if (!passwordRegex.test(password)) {
             setErrorMessage('Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character');
-            return; // Stop further execution
+            return;
         }
         
         Axios.post('http://localhost:9004/api/register', {
@@ -56,7 +51,6 @@ const Register = () => {
             if (response.data.token) {
                 setErrorMessage('User has been registered successfully.');
                 navigate('/login');
-                // Redirect or any other logic upon successful registration
             } else {
                 setErrorMessage('Invalid registration details');
             }
@@ -99,11 +93,20 @@ const Register = () => {
                     </div>
                     <form action="" className='form grid'>
                         <span className="errorMessage">{errorMessage}</span>
+
+                        {/* Message for registering as a doctor */}
+                        <div className="infoMessage">
+    <p>For doctor registration, use an email like <strong>johndoe.department@gmail.com</strong>.</p>
+    <p><strong>Pediatrics (ped), Dermatology (derm), Neurology (neu).</strong></p>
+    
+</div>
+
+
                         <div className="inputDiv">
                             <label htmlFor="email">Email</label>
                             <div className="input flex">
                                 <MdMarkEmailRead className='icon'/>
-                                <input type="email" name="" id="email" placeholder='Enter Email' 
+                                <input type="email" id="email" placeholder='Enter Email' 
                                 value={email}
                                 onChange={(event)=>{ setEmail(event.target.value) }}/>
                             </div>
@@ -112,7 +115,7 @@ const Register = () => {
                             <label htmlFor="email">Username</label>
                             <div className="input flex">
                                 <FaUserShield className='icon'/>
-                                <input type="text" name="" id="username" placeholder='Enter Username' 
+                                <input type="text" id="username" placeholder='Enter Username' 
                                 value={userName}
                                 onChange={(event)=>{ setUserName(event.target.value) }}/>
                             </div>
@@ -121,7 +124,7 @@ const Register = () => {
                             <label htmlFor="password">Password</label>
                             <div className="input flex">
                                 <BsFillShieldLockFill  className='icon'/>
-                                <input type="password" name="" id="password" placeholder='Enter password'
+                                <input type="password" id="password" placeholder='Enter password'
                                 value={password}
                                 onChange={(event)=>{ setPassword(event.target.value) }} />
                             </div>

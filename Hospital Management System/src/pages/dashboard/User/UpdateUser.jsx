@@ -169,6 +169,7 @@ function UpdateUser({ id, onClose }) {
                     value={formData.email}
                     onChange={handleChange}
                     helperText="Please enter a valid email address."
+                    disabled
                 />
                 <TextField
                     fullWidth

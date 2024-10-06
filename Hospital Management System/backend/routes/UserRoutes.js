@@ -10,7 +10,9 @@ const {
     AddUser,
     UpdateUser,
     DeleteUser,
-    getUsersWithRoles
+    getUsersWithRoles,
+    FindUsersWithPeriodInEmail,
+    FindUsersWithoutEmailInPatientOrStaff
 } = require("../controllers/UserController");
 
 
@@ -22,6 +24,8 @@ router.put("/users/update/:id", authenticateToken(['admin', 'doctor', 'patient']
 router.delete("/users/delete/:id", DeleteUser);
 // router.get('/users/with-roles' , authenticateToken(['admin', 'doctor', 'patient']) , getUsersWithRoles);
 
+router.get("/userswithnoperiod", authenticateToken(['admin', 'doctor', 'patient']), FindUsersWithPeriodInEmail )
+router.get("/userswithnopatientorstaff", authenticateToken(['admin', 'doctor', 'patient']), FindUsersWithoutEmailInPatientOrStaff )
 // Route for user login
 router.post("/login", loginUser);
 

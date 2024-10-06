@@ -1,6 +1,9 @@
 const Medicine = require('../models/Medicine');
 const { Op } = require('sequelize');
 const Patient = require('../models/Patient');
+const Staff = require('../models/Staff');
+const Doctor = require('../models/Doctor');
+const Visit = require('../models/Visits')
 const getPatientByEmail = async (email) => {
     try {
         const patient = await Patient.findOne({
@@ -17,41 +20,95 @@ const getPatientByEmail = async (email) => {
         throw error;
     }
 };
-const FindAllMedicine = async (req, res) => {
+const getDoctorByEmail = async (email) => {
     try {
-        const userEmail = req.user.email;
-        const userRole = req.user.role;
+        // Fetch the staff member with the given email
+        const staff = await Staff.findOne({
+            where: { Email: email } // Check the email in the Staff table
+        });
 
-        let medicines;
-        if (userRole === 'admin') {
-            medicines = await Medicine.findAll({
-                include: {
-                    model: Patient
-                },
-            });
-        } else if (userRole === 'patient') {
-            const patient = await getPatientByEmail(userEmail);
-            medicines = await Medicine.findAll({
-                where: { Patient_ID: patient.Patient_ID },
-                include: {
-                    model: Patient
-                },
-            });
-        } else {
-            return res.status(403).json({ error: 'Forbidden' });
+        if (!staff) {
+            throw new Error('Staff member not found');
         }
 
-        const medicinesDataWithNames = medicines.map(medicine => ({
-            ...medicine.toJSON(),
-            Patient_Name: medicine.Patient ? `${medicine.Patient.Patient_Fname} ${medicine.Patient.Patient_Lname}` : 'Unknown Patient'
-        }));
+        // Fetch the doctor associated with the staff member
+        const doctor = await Doctor.findOne({
+            where: { Emp_ID: staff.Emp_ID } // Use Emp_ID to find the associated doctor
+        });
 
-        res.json(medicinesDataWithNames);
+        if (!doctor) {
+            throw new Error('Doctor not found');
+        }
+
+        return doctor;
     } catch (error) {
-        console.error('Error fetching medicines:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error('Error fetching doctor by email:', error);
+        throw error;
     }
 };
+    const FindAllMedicine = async (req, res) => {
+        try {
+            const userEmail = req.user.email;
+            const userRole = req.user.role;
+
+            let medicines;
+            if (userRole === 'admin') {
+                // Admin can fetch all medicines
+                medicines = await Medicine.findAll({
+                    include: {
+                        model: Patient
+                    },
+                });
+            } else if (userRole === 'doctor') {
+                // Fetch doctor based on email
+                const doctor = await getDoctorByEmail(userEmail);
+
+                // Fetch visits for patients treated by the logged-in doctor
+                const visits = await Visit.findAll({
+                    where: { Doctor_ID: doctor.Doctor_ID }, // Filter visits by the logged-in doctor
+                    include: [
+                        {
+                            model: Patient, // Include Patient details
+                        }
+                    ],
+                });
+
+                const patientIds = visits.map(visit => visit.Patient_ID); // Get patient IDs from visits
+
+                // Fetch medicines associated with patients who have visits
+                medicines = await Medicine.findAll({
+                    where: {
+                        Patient_ID: patientIds // Only get medicines for patients who have visits
+                    },
+                    include: {
+                        model: Patient // Include Patient details
+                    },
+                });
+            } else if (userRole === 'patient') {
+                // Fetch medicines only for the logged-in patient
+                const patient = await getPatientByEmail(userEmail);
+                medicines = await Medicine.findAll({
+                    where: { Patient_ID: patient.Patient_ID },
+                    include: {
+                        model: Patient
+                    },
+                });
+            } else {
+                return res.status(403).json({ error: 'Forbidden' });
+            }
+
+            const medicinesDataWithNames = medicines.map(medicine => ({
+                ...medicine.toJSON(),
+                Patient_Name: medicine.Patient ? `${medicine.Patient.Patient_Fname} ${medicine.Patient.Patient_Lname}` : 'Unknown Patient'
+            }));
+
+            res.json(medicinesDataWithNames);
+        } catch (error) {
+            console.error('Error fetching medicines:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    };
+
 
 const FindSingleMedicine = async (req, res) => {
     try {
@@ -88,11 +145,7 @@ const AddMedicine = async (req, res) => {
             return res.status(400).json({ error: 'Medicine cost must be at least 1' });
         }
 
-        // Check if the medicine already exists
-        const existingMedicine = await Medicine.findOne({ where: { M_name } });
-        if (existingMedicine) {
-            return res.status(400).json({ error: 'Medicine with the same name already exists' });
-        }
+
 
         // Check if the patient already has an existing medicine
         const patientMedicines = await Medicine.findAll({ where: { Patient_ID } });
@@ -148,12 +201,7 @@ const UpdateMedicine = async (req, res) => {
         }
 
         // Check if another medicine with the same name exists, excluding the current one
-        const existingMedicine = await Medicine.findOne({
-            where: { M_name, Medicine_ID: { [Op.ne]: req.params.id } }
-        });
-        if (existingMedicine) {
-            return res.status(400).json({ error: 'Medicine with the same name already exists' });
-        }
+
 
         const updated = await Medicine.update(
             { M_name, M_Quantity, M_Cost, Patient_ID }, // Add Patient_ID to the update

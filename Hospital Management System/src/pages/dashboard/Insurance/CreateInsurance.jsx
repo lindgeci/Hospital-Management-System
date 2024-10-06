@@ -53,14 +53,14 @@ function CreateInsurance({ onClose }) {
                 },
             });
             setPatients(response.data);
-            if (response.data.length === 1) {
-                setFormData((prev) => ({ ...prev, Patient_ID: response.data[0].Patient_ID })); // Auto-select if only one patient
-            }
+            // Remove the auto-select logic:
+            // if (response.data.length === 1) {
+            //     setFormData((prev) => ({ ...prev, Patient_ID: response.data[0].Patient_ID }));
+            // }
         } catch (error) {
             console.error('Error fetching patients:', error);
         }
     };
-
     const fetchInsurance = async () => {
         try {
             const response = await axios.get('http://localhost:9004/api/insurance', {
@@ -96,10 +96,19 @@ function CreateInsurance({ onClose }) {
             navigate('/dashboard/insurance');
             window.location.reload();
         } catch (error) {
-            console.error('Error adding insurance:', error);
-            showAlert('Error adding insurance. Please try again.');
+            // Check for the specific error from the backend
+            if (error.response && error.response.status === 400) {
+                // Show the specific error message from the backend
+                showAlert(error.response.data.error);
+            } else {
+                // Handle general errors
+                console.error('Error adding insurance:', error);
+                showAlert('Error adding insurance. Please try again.');
+            }
         }
     };
+    
+    
 
     const showAlert = (message) => {
         setAlertMessage(message);

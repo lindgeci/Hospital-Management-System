@@ -13,8 +13,9 @@ const CreateReport = ({ onClose, onSaveSuccess }) => {
     age: '',
     patientGender: '',
     bloodType: '',
-    diagnosis: '',
+    Time: '',
     doctorName: '',
+    doctorEmail: '',
     email: '',
     phone: '',
     condition: '',
@@ -132,8 +133,9 @@ useEffect(() => {
         age: '',
         patientGender: '',
         bloodType: '',
-        diagnosis: '',
+        Time: '',
         doctorName: '',
+        doctorEmail: '',
         email: '',
         phone: '',
         condition: '',
@@ -153,7 +155,6 @@ useEffect(() => {
         }
       });
 
-      // Check if the patient has no visits
       if (!visitCheckResponse.data) {
         setModalMessage('This patient has no visits.');
         setShowModal(true);
@@ -162,11 +163,10 @@ useEffect(() => {
 
       // Check if the patient has an existing report
       const reportExists = await checkExistingReport(selectedPatient);
-      
       if (reportExists) {
         setModalMessage('This patient already has a report.');
         setShowModal(true);
-        return; // Prevent further processing if a report exists
+        return;
       }
 
       const response = await axios.get(`http://localhost:9004/api/visit/patient/${selectedPatient}`, {
@@ -176,7 +176,6 @@ useEffect(() => {
       });
 
       const visits = response.data;
-      
       if (!Array.isArray(visits) || visits.length === 0) {
         setModalMessage('No visits found for this patient.');
         setShowModal(true);
@@ -193,23 +192,23 @@ useEffect(() => {
         age: calculateAge(patient.Birth_Date),
         patientGender: patient.Gender,
         bloodType: patient.Blood_type,
-        diagnosis: visit.diagnosis,
-        doctorName: `${doctor.Emp_Fname} ${doctor.Emp_Lname}`,
+        Time: visit.Time,
+        doctorName: `${doctor.Emp_Fname} ${doctor.Emp_Lname}`, // Combining first and last name
+        doctorEmail: `${doctor.Email}`, // Fetching doctor's email
         email: patient.Email,
         phone: patient.Phone,
         condition: visit.condition,
         therapy: visit.therapy,
         dateOfVisit: visit.date_of_visit,
-        roomCost: '',
+        roomCost: '', // Initialize room cost
         medicineCost: '' // Initialize medicine cost
       });
 
       // Fetch room cost and medicine cost for the selected patient
       await fetchRoomCost(selectedPatient);
-      await fetchMedicineCost(selectedPatient); // Call the new function
+      await fetchMedicineCost(selectedPatient);
     } catch (error) {
       if (error.response && error.response.status === 404) {
-        // Specific error message for visits not found
         setModalMessage('Visits not found.');
       } else {
         console.error('Error fetching visit data:', error);
@@ -221,6 +220,7 @@ useEffect(() => {
 
   fetchPatientVisits();
 }, [selectedPatient, token]);
+
 
 
   const calculateAge = birthDate => {
@@ -242,8 +242,9 @@ useEffect(() => {
       !formData.age ||
       !formData.patientGender ||
       !formData.bloodType ||
-      !formData.diagnosis ||
+      !formData.Time ||
       !formData.doctorName ||
+      !formData.doctorEmail ||
       !formData.email ||
       !formData.phone
     ) {
@@ -288,8 +289,9 @@ useEffect(() => {
       !formData.age ||
       !formData.patientGender ||
       !formData.bloodType ||
-      !formData.diagnosis ||
+      !formData.Time ||
       !formData.doctorName ||
+      !formData.doctorEmail ||
       !formData.email ||
       !formData.phone 
     ) {
@@ -330,9 +332,10 @@ const createPdfAndSaveToDb = async () => {
         !formData.patientName ||
         !formData.age ||
         !formData.patientGender ||
-        !formData.bloodType ||
-        !formData.diagnosis ||
+        !formData.bloodType ||  
+        !formData.Time ||
         !formData.doctorName ||
+        !formData.doctorEmail ||
         !formData.email ||
         !formData.phone 
     ) {

@@ -12,7 +12,7 @@ function UpdateVisit({ id, onClose }) {
         Doctor_ID: '',
         date_of_visit: '',
         condition: '',
-        diagnosis: '',
+        Time: '',
         therapy: '',
     });
     const [originalData, setOriginalData] = useState({});
@@ -26,7 +26,10 @@ function UpdateVisit({ id, onClose }) {
     const [doctorName, setDoctorName] = useState('');
     const navigate = useNavigate();
     const token = Cookies.get('token');
-
+    const formatTime = (time) => {
+        return time.substring(0, 5); // Convert "HH:mm:ss" to "HH:mm"
+    };
+    
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -45,7 +48,7 @@ function UpdateVisit({ id, onClose }) {
                     Doctor_ID: visitData.Doctor_ID,
                     date_of_visit: visitData.date_of_visit,
                     condition: visitData.condition,
-                    diagnosis: visitData.diagnosis,
+                    Time: formatTime(visitData.Time), // Format the time correctly
                     therapy: visitData.therapy,
                 });
                 setPatientName(patient ? `${patient.Patient_Fname} ${patient.Patient_Lname}` : 'Unknown');
@@ -82,7 +85,16 @@ function UpdateVisit({ id, onClose }) {
             fetchDoctorQualifications(value);
         }
     };
-
+    const generateTimeOptions = () => {
+        const options = [];
+        for (let hour = 0; hour < 24; hour++) {
+            for (let minute = 0; minute < 60; minute += 30) {
+                const time = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+                options.push(time);
+            }
+        }
+        return options;
+    };
     const fetchDoctorQualifications = async (doctorId) => {
         try {
             const response = await axios.get(`http://localhost:9004/api/doctors/${doctorId}`, {
@@ -110,10 +122,10 @@ function UpdateVisit({ id, onClose }) {
     };
 
     const handleUpdateVisit = async () => {
-        const { Patient_ID, Doctor_ID, date_of_visit, condition, diagnosis, therapy } = formData;
+        const { Patient_ID, Doctor_ID, date_of_visit, condition, Time, therapy } = formData;
     
         // Ensure all fields are filled
-        if (Patient_ID === '' || Doctor_ID === '' || date_of_visit === '' || condition === '' || diagnosis === '' || therapy === '') {
+        if (Patient_ID === '' || Doctor_ID === '' || date_of_visit === '' || condition === '' || Time === '' || therapy === '') {
             showAlert('All fields are required.');
             return;
         }
@@ -124,7 +136,7 @@ function UpdateVisit({ id, onClose }) {
             Doctor_ID !== originalData.Doctor_ID ||
             date_of_visit !== originalData.date_of_visit ||
             condition !== originalData.condition ||
-            diagnosis !== originalData.diagnosis ||
+            Time !== originalData.Time ||
             therapy !== originalData.therapy;
     
         if (!dataChanged) {
@@ -158,11 +170,12 @@ function UpdateVisit({ id, onClose }) {
         setAlertMessage(message);
         setShowErrorModal(true);
     };
-
     const getTodayDate = () => {
         const today = new Date();
-        return today.toISOString().split('T')[0];  // Returns yyyy-mm-dd format
+        const formattedDate = today.toISOString().split('T')[0]; // Ensure this returns 'YYYY-MM-DD'
+        return formattedDate;
     };
+    
 
     return (
         <Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
@@ -237,19 +250,20 @@ function UpdateVisit({ id, onClose }) {
         <FormHelperText>This is the qualifications of the selected doctor</FormHelperText>
 
         <TextField
-            fullWidth
-            margin="dense"
-            label="Date of Visit"
-            variant="outlined"
-            type="date"
-            id="dateOfVisit"
-            name="date_of_visit"
-            value={formData.date_of_visit}
-            onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
-            inputProps={{ min: getTodayDate() }}
-            helperText="Select a future date for the visit"
-        />
+    fullWidth
+    label="Date of Visit"
+    variant="outlined"
+    type="date"
+    id="dateOfVisit"
+    name="date_of_visit"
+    value={formData.date_of_visit}
+    onChange={handleChange}
+    InputLabelProps={{ shrink: true }}
+    inputProps={{ min: getTodayDate() }}  // Prevent selecting past dates
+    margin="dense"
+/>
+<FormHelperText>Select a future date for the visit</FormHelperText>
+
 
         <FormControl fullWidth margin="dense" variant="outlined">
             <InputLabel id="condition-label">Condition</InputLabel>
@@ -265,24 +279,27 @@ function UpdateVisit({ id, onClose }) {
                 <MenuItem value="Minor Issues">Minor Issues</MenuItem>
                 <MenuItem value="Serious Condition">Serious Condition</MenuItem>
             </Select>
-            <FormHelperText>Select the diagnosis given by the doctor</FormHelperText>
+            <FormHelperText>Select the condition given by the doctor</FormHelperText>
         </FormControl>
 
         <FormControl fullWidth margin="dense" variant="outlined">
-            <InputLabel id="diagnosis-label">Diagnosis</InputLabel>
+            <InputLabel id="Time-label">Time</InputLabel>
             <Select
                 fullWidth
-                label="Diagnosis"
+                label="Time"
                 variant="outlined"
-                name="diagnosis"
-                value={formData.diagnosis}
+                name="Time"
+                value={formData.Time}
                 onChange={handleChange}
             >
-                <MenuItem value="Diagnosis A">Diagnosis A</MenuItem>
-                <MenuItem value="Diagnosis B">Diagnosis B</MenuItem>
-                <MenuItem value="Diagnosis C">Diagnosis C</MenuItem>
+                <MenuItem value=""><em>Select Time</em></MenuItem>
+                        {generateTimeOptions().map((time) => (
+                            <MenuItem key={time} value={time}>
+                                {time}
+                            </MenuItem>
+                        ))}
             </Select>
-            <FormHelperText>Select the diagnosis given by the doctor</FormHelperText>
+            <FormHelperText>Select the time given by the doctor</FormHelperText>
         </FormControl>
 
         <FormControl fullWidth margin="dense" variant="outlined">

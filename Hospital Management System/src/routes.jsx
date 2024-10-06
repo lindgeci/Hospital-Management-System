@@ -44,7 +44,7 @@ import { Home, Profile, Medicines, Appointments,MedicalHistorys,Bills,Staffs, Pa
           name: "medicine",
           path: "/medicines",
           element: <Medicines />,
-          allowedRoles: ['admin','patient']
+          allowedRoles: ['admin','patient','doctor']
         },
         {
           icon: (
@@ -56,7 +56,7 @@ import { Home, Profile, Medicines, Appointments,MedicalHistorys,Bills,Staffs, Pa
           name: "room",
           path: "/room",
           element: <Rooms />,
-          allowedRoles: ['admin','patient']
+          allowedRoles: ['admin','patient','doctor']
         },
         {
           icon: (
@@ -69,7 +69,7 @@ import { Home, Profile, Medicines, Appointments,MedicalHistorys,Bills,Staffs, Pa
           name: "Patient",
           path: "/patient",
           element: <Patients />,
-          allowedRoles: ['admin', 'doctor']
+          allowedRoles: ['admin', 'doctor','patient']
         },
         {
           icon: (
@@ -82,7 +82,7 @@ import { Home, Profile, Medicines, Appointments,MedicalHistorys,Bills,Staffs, Pa
           name: "Staff",
           path: "/staffs",
           element: <Staffs />,
-          allowedRoles: ['admin']
+          allowedRoles: ['admin','doctor']
         },
         // {
         //   icon: (
@@ -178,7 +178,7 @@ import { Home, Profile, Medicines, Appointments,MedicalHistorys,Bills,Staffs, Pa
             name: "medical history",
             path: "/medicalhistorys",
             element: <MedicalHistorys />,
-            allowedRoles: ['admin', 'patient',]
+            allowedRoles: ['admin', 'doctor','patient',]
           },
           {
             icon: (

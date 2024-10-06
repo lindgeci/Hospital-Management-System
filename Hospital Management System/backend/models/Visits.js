@@ -31,9 +31,9 @@ const Visit = sequelize.define('Visit', {
         type: DataTypes.STRING,
         allowNull: false
     },
-    diagnosis: {
-        type: DataTypes.STRING,
-        allowNull: false
+    Time: {
+        type: DataTypes.TIME,
+        allowNull: false,
     },
     therapy: {
         type: DataTypes.STRING,

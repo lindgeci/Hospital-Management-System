@@ -32,7 +32,7 @@ function Medicine({
                 });
                 const currentUser = userResponse.data.find(user => user.email === userEmail);
                 const role = currentUser.role;
-                // console.log(currentUser);
+                console.log(currentUser);
                 // console.log('User Role:', role); // Debug log to verify the user role
                 setUserRole(role);
             } catch (err) {
@@ -107,7 +107,7 @@ function Medicine({
         { field: 'M_Quantity', headerName: 'Quantity', flex: 1 },
         { field: 'M_Cost', headerName: 'Cost', flex: 1 },
         { field: 'Patient_Name', headerName: 'Patient Name', flex: 1 },
-        ...(userRole == 'admin' ? [
+        ...(userRole !== 'patient' ? [
             {
                 field: 'update',
                 headerName: 'Update',
@@ -121,6 +121,8 @@ function Medicine({
                     />
                 ),
             },
+        ] : []),
+        ...(userRole == 'admin' ? [
             {
                 field: 'delete',
                 headerName: 'Delete',

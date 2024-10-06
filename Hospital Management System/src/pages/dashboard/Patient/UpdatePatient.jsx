@@ -86,74 +86,72 @@ function UpdatePatient({ id, onClose }) {
     const handleUpdatePatient = async () => {
         try {
             const { Personal_Number, Patient_Fname, Patient_Lname, Birth_Date, Blood_type, Email, Gender, Phone } = formData;
-    
-            const personalNumberStr = String(Personal_Number); // Convert Personal_Number to string for comparison
-    
+
+            // Frontend validations
             if (!Patient_Fname.trim() || !Patient_Lname.trim() || !Blood_type.trim() || !Email.trim() || !Gender.trim() || !Phone.trim()) {
                 showAlert('All fields are required.');
                 return;
             }
-    
+
+            // Validate email
             const validateEmail = (email) => {
                 const re = /^[^\s@]+@[^\s@]+\.(com|ubt-uni\.net)$/;
                 return re.test(String(email).toLowerCase());
             };
-    
+
             if (!validateEmail(Email)) {
                 showAlert('Email must end with @ubt-uni.net or .com');
                 return;
             }
-            
-    
+
+            // Validate names
             const validateName = (name) => /^[A-Za-z]+$/.test(name);
-    
+
             if (!validateName(Patient_Fname)) {
                 showAlert('First Name can only contain letters');
                 return;
             }
-    
+
             if (!validateName(Patient_Lname)) {
                 showAlert('Last Name can only contain letters');
                 return;
             }
-    
-            // Check for an existing patient with the same Personal Number, excluding the current patient by ID
-            const existingPatientWithPersonalNumber = patients.find(patient => String(patient.Personal_Number) === personalNumberStr && patient.Patient_ID !== id);
-            if (existingPatientWithPersonalNumber) {
-                showAlert('Patient with the same Personal Number already exists.');
+
+            // Ensure changes were made before submitting
+            if (
+                Personal_Number === originalData.Personal_Number &&
+                Patient_Fname === originalData.Patient_Fname &&
+                Patient_Lname === originalData.Patient_Lname &&
+                Birth_Date === originalData.Birth_Date &&
+                Blood_type === originalData.Blood_type &&
+                Email === originalData.Email &&
+                Gender === originalData.Gender &&
+                Phone === originalData.Phone
+            ) {
+                showAlert('No changes detected.');
                 return;
             }
-    
-            // Check for an existing patient with the same Email, excluding the current patient by ID
-            const existingPatientWithEmail = patients.find(patient => patient.Email === Email && patient.Patient_ID !== id);
-            if (existingPatientWithEmail) {
-                showAlert('Patient with the same Email already exists.');
-                return;
-            }
-    
-            // Check for an existing patient with the same Phone, excluding the current patient by ID
-            const existingPatientWithPhone = patients.find(patient => patient.Phone === Phone && patient.Patient_ID !== id);
-            if (existingPatientWithPhone) {
-                showAlert('Patient with the same Phone number already exists.');
-                return;
-            }
-    
-            // Proceed with the update if no validation issues are found
-            await axios.put(`http://localhost:9004/api/patient/update/${id}`, formData, {
+
+            // Send updated data to backend
+            const response = await axios.put(`http://localhost:9004/api/patient/update/${id}`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-    
-            navigate('/dashboard/patient');
-            window.location.reload();
-    
+
+            if (response.status === 200) {
+                navigate('/dashboard/patient');
+                window.location.reload();
+            }
         } catch (error) {
-            console.error('Error updating patient:', error);
-            showAlert('An error occurred while updating the patient. Please try again later.');
+            if (error.response && error.response.status === 400) {
+                showAlert(error.response.data.error);
+            } else {
+                console.error('Error updating patient:', error);
+                showAlert('An error occurred while updating the patient. Please try again later.');
+            }
         }
     };
-    
 
     return (
         <Modal open onClose={onClose} className="fixed inset-0 flex items-center justify-center z-10 overflow-auto bg-black bg-opacity-50">
@@ -174,6 +172,7 @@ function UpdatePatient({ id, onClose }) {
                     value={formData.Personal_Number}
                     onChange={handleChange}
                     helperText="Enter a unique personal number."
+                    disabled
                 />
                 <TextField
                     fullWidth
@@ -210,7 +209,7 @@ function UpdatePatient({ id, onClose }) {
                     value={formData.Birth_Date}
                     onChange={handleChange}
                     InputLabelProps={{ shrink: true }}
-                    disabled
+                    
                     helperText="Enter your birth date."
                 />
                 <FormControl fullWidth variant="outlined" margin="dense">
@@ -222,7 +221,7 @@ function UpdatePatient({ id, onClose }) {
                         value={formData.Gender}
                         onChange={handleChange}
                         label="Gender"
-                        disabled
+                        
                     >
                         <MenuItem value=""><em>Select Gender</em></MenuItem>
                         <MenuItem value="Male">Male</MenuItem>
@@ -241,7 +240,7 @@ function UpdatePatient({ id, onClose }) {
                         value={formData.Blood_type}
                         onChange={handleChange}
                         label="Blood Type"
-                        disabled
+                        
                     >
                         <MenuItem value=""><em>Select Blood Type</em></MenuItem>
                         <MenuItem value="A+">A+</MenuItem>
@@ -266,6 +265,7 @@ function UpdatePatient({ id, onClose }) {
                     value={formData.Email}
                     onChange={handleChange}
                     helperText="Must end with @ubt-uni.net or .com."
+                    disabled
                 />
                 <TextField
                     fullWidth
@@ -278,6 +278,7 @@ function UpdatePatient({ id, onClose }) {
                     value={formData.Phone}
                     onChange={handleChange}
                     helperText="Enter a valid phone number."
+                    disabled
                 />
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
                     <Button variant="contained" color="primary" onClick={handleUpdatePatient} sx={{ mr: 1 }}>Submit</Button>

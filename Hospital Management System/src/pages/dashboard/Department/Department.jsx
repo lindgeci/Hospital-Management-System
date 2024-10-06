@@ -5,7 +5,7 @@ import CreateDepartment from './CreateDepartment';
 import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 import { Add, Delete, Edit } from '@mui/icons-material';
 import Cookies from 'js-cookie';
-
+import {jwtDecode} from 'jwt-decode';
 function Department({ 
     showCreateForm, 
     setShowCreateForm,
@@ -15,7 +15,26 @@ function Department({
     const [department, setDepartment] = useState([]);
     const [deleteDepartmentId, setDeleteDepartmentId] = useState(null);
     const token = Cookies.get('token');
+    const [userRole, setUserRole] = useState('');
 
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+                const decodedToken = jwtDecode(token);
+                const userEmail = decodedToken.email;
+                
+                const userResponse = await axios.get('http://localhost:9004/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+                const currentUser = userResponse.data.find(user => user.email === userEmail);
+                const role = currentUser.role;
+                console.log('User Role:', role); // Debug log to verify the user role
+                setUserRole(role);
+            } catch (err) {
+                console.error('Error fetching user role:', err.response ? err.response.data : err.message);
+            }
+        };
+
+        fetchUserRole();
+    }, [token]);
     useEffect(() => {
         axios.get('http://localhost:9004/api/department', {
                 headers: {
@@ -62,6 +81,7 @@ function Department({
         { field: 'Dept_head', headerName: 'Department Head', flex: 1 },
         { field: 'Dept_name', headerName: 'Department Name', flex: 1 },
         { field: 'Emp_Count', headerName: 'Employee Count', flex: 1 },
+        ...(userRole == 'admin' ? [
         {
             field: 'update',
             headerName: 'Update',
@@ -90,6 +110,7 @@ function Department({
                 </Button>
             ),
         }
+    ] : [])
     ];
         
     return (
@@ -120,7 +141,7 @@ function Department({
                 <Typography variant="h6">
                     Departments
                 </Typography>
-                {showCreateForm ? null : (
+                {userRole == 'admin' && !showCreateForm && (
                     <Button
                         variant="contained"
                         color="primary"

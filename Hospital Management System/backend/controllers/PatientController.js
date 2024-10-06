@@ -1,15 +1,54 @@
 const Patient = require('../models/Patient');
 const { Op } = require('sequelize');
 const Visit = require('../models/Visits');
-const FindAllPatients = async (req, res) => {
+const User = require('../models/User');
+
+const getPatientByEmail = async (email) => {
     try {
-        const patients = await Patient.findAll();
-        res.json(patients);
+        const patient = await Patient.findOne({
+            where: { Email: email }
+        });
+
+        if (!patient) {
+            throw new Error('Patient not found');
+        }
+
+        return patient;
     } catch (error) {
-        console.error('Error fetching all patients:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        console.error('Error fetching patient by email:', error);
+        throw error;
     }
 };
+    const FindAllPatients = async (req, res) => {
+        try {
+            const userEmail = req.user.email;
+            const userRole = req.user.role;
+
+            let patients;
+            if (userRole === 'admin' || userRole === 'doctor') {
+                // Admin and doctor can fetch all patients
+                patients = await Patient.findAll();
+            } else if (userRole === 'patient') {
+                // Fetch only the logged-in patient
+                const patient = await getPatientByEmail(userEmail);
+                patients = await Patient.findAll({
+                    where: { Email: patient.Email }
+                });
+            } else {
+                return res.status(403).json({ error: 'Forbidden' });
+            }
+
+            const patientsDataWithNames = patients.map(patient => ({
+                ...patient.toJSON(),
+                Patient_Name: `${patient.Patient_Fname} ${patient.Patient_Lname}`
+            }));
+
+            res.json(patientsDataWithNames);
+        } catch (error) {
+            console.error('Error fetching patients:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    };
 const Room = require('../models/Room');
 
 const FindRoomCostByPatientId = async (req, res) => {
@@ -50,7 +89,10 @@ const FindSinglepatientPatient = async (req, res) => {
 const AddPatient = async (req, res) => {
     try {
         const { Personal_Number, Patient_Fname, Patient_Lname, Birth_Date, Blood_type, Email, Gender, Phone } = req.body;
-        
+
+        // Convert Personal_Number to a string if it's a number
+        const personalNumberStr = String(Personal_Number);
+
         // Validation logic
         const personalNumberRegex = /^\d{10}$/;
         const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -58,7 +100,7 @@ const AddPatient = async (req, res) => {
         const bloodTypeRegex = /^(A|B|AB|O)[+-]$/;
 
         if (
-            !Personal_Number.match(personalNumberRegex) ||
+            !personalNumberStr.match(personalNumberRegex) || // Validate Personal_Number as string
             !Patient_Fname ||
             !Patient_Lname ||
             !Birth_Date ||
@@ -103,6 +145,7 @@ const AddPatient = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 const UpdatePatient = async (req, res) => {
     try {
         const { Personal_Number, Patient_Fname, Patient_Lname, Birth_Date, Blood_type, Email, Gender, Phone } = req.body;
@@ -143,20 +186,35 @@ const UpdatePatient = async (req, res) => {
 
 const DeletePatient = async (req, res) => {
     try {
-        const deleted = await Patient.destroy({
-            where: { Patient_ID: req.params.id },
-        });
-        if (deleted === 0) {
-            res.status(404).json({ error: 'Patient not found' });
-            return;
+        // Fetch the patient using the Patient_ID
+        const patient = await Patient.findOne({ where: { Patient_ID: req.params.id } });
+
+        if (!patient) {
+            return res.status(404).json({ error: 'Patient not found' });
         }
-        res.json({ success: true, message: 'Patient deleted successfully' });
+
+        const patientEmail = patient.Email; // Get the patient's email
+
+        // Delete the patient record
+        const deletedPatient = await Patient.destroy({ where: { Patient_ID: req.params.id } });
+
+        if (deletedPatient === 0) {
+            return res.status(404).json({ error: 'Patient not found' });
+        }
+
+        // Delete the associated user by email
+        const deletedUser = await User.destroy({ where: { email: patientEmail } });
+
+        if (deletedUser === 0) {
+            return res.status(404).json({ error: 'User associated with patient not found' });
+        }
+
+        res.json({ success: true, message: 'Patient and associated user deleted successfully' });
     } catch (error) {
-        console.error('Error deleting patient:', error);
+        console.error('Error deleting patient and user:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
 const CheckPatientExistence = async (req, res) => {
     try {
         const { id } = req.params;

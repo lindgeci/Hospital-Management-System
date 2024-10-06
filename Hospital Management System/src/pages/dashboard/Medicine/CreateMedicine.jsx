@@ -148,11 +148,7 @@ function CreateMedicine({ onClose }) {
             return;
         }
 
-        const existingMedicine = medicines.find(medicine => medicine.M_name === M_name);
-        if (existingMedicine) {
-            showAlert('Medicine with the same name already exists');
-            return;
-        }
+
 
         const existingMedicine1 = medicines.find(medicine => medicine.Patient_ID === Patient_ID);
         if (existingMedicine1) {

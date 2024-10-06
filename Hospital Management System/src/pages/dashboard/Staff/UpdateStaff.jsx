@@ -3,7 +3,7 @@
     import { Modal, Box, TextField, FormHelperText, Button, Typography, Select, MenuItem, InputLabel, FormControl } from '@mui/material';
     import ErrorModal from '../../../components/ErrorModal';
     import Cookies from 'js-cookie';
-
+    import { jwtDecode } from 'jwt-decode';
     function UpdateStaff({ id, onClose }) {
         const [formData, setFormData] = useState({
             Emp_Fname: '',
@@ -17,13 +17,34 @@
             Qualifications: '',
             Specialization: ''
         });
-        const [departments, setDepartments] = useState([]);
+        const [department, setDepartments] = useState([]);
         const [originalData, setOriginalData] = useState({});
         const [staff, setStaff] = useState([]); // New state for staff data
         const [alertMessage, setAlertMessage] = useState('');
         const [showErrorModal, setShowErrorModal] = useState(false);
         const token = Cookies.get('token');
-
+        const [userRole, setUserRole] = useState('');
+        useEffect(() => {
+            const fetchUserRole = async () => {
+                try {
+                    const decodedToken = jwtDecode(token);
+                    const userEmail = decodedToken.email;
+                    
+                    const userResponse = await axios.get('http://localhost:9004/api/users', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const currentUser = userResponse.data.find(user => user.email === userEmail);
+                    const role = currentUser.role;
+                    console.log(currentUser);
+                    console.log('User Role:', role); // Debug log to verify the user role
+                    setUserRole(role);
+                } catch (err) {
+                    console.error('Error fetching user role:', err.response ? err.response.data : err.message);
+                }
+            };
+    
+            fetchUserRole();
+        }, [token]);
         useEffect(() => {
             fetchStaffDetails();
             fetchDepartments();
@@ -251,6 +272,27 @@
                         onChange={handleChange}
                         helperText="Only letters are allowed."
                     />
+{userRole === 'admin' && (
+    <FormControl fullWidth variant="outlined" margin="dense">
+        <InputLabel id="department-select-label">Department</InputLabel>
+        <Select
+            labelId="department-select-label"
+            id="visitDepartmentID"
+            name="Dept_ID"
+            value={formData.Dept_ID}
+            onChange={handleChange}
+            label="Department"
+        >
+            <MenuItem value=""><em>Select Department</em></MenuItem>
+            {department.map(departmenttype => (
+                <MenuItem key={departmenttype.Dept_ID} value={departmenttype.Dept_ID}>
+                    {departmenttype.Dept_name}
+                </MenuItem>
+            ))}
+        </Select>
+        <FormHelperText>Please select a department.</FormHelperText>
+    </FormControl>
+)}
 
                     <TextField
                         margin="dense"

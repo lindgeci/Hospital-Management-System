@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Typography } from '@material-tailwind/react';
 import Cookies from 'js-cookie'; // Import js-cookie
 export function Home() {
-  const [appointments, setAppointments] = useState([]);
+  const [visits, setVisits] = useState([]);
   const [patients, setPatients] = useState([]);
   const [department, setDepartment] = useState([]);
   const [staff, setStaff] = useState([]);
@@ -17,10 +17,9 @@ export function Home() {
         const headers = {
           'Authorization': `Bearer ${token}`
         };
-
-        // Fetch appointments
-        const appointmentResponse = await axios.get('http://localhost:9004/api/appointment', { headers });
-        setAppointments(appointmentResponse.data.appointments)
+        // Fetch visits
+        const VisitResponse = await axios.get('http://localhost:9004/api/visit', { headers });
+        setVisits(VisitResponse.data)
 
         // Fetch patients
         const patientResponse = await axios.get('http://localhost:9004/api/patient', { headers });
@@ -55,12 +54,12 @@ export function Home() {
      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-lg shadow-md bg-white p-6 flex flex-col items-center justify-center space-y-4">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-12 h-12 text-blue-500">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-        </svg>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-9M10.125 2.25h.375a9 9 0 0 1 9 9v.375M10.125 2.25A3.375 3.375 0 0 1 13.5 5.625v1.5c0 .621.504 1.125 1.125 1.125h1.5a3.375 3.375 0 0 1 3.375 3.375M9 15l2.25 2.25L15 12" />
+            </svg>
         <div className="text-center">
-          <p className="text-gray-500">Appointments</p>
-          <h2 className="text-5xl font-bold">{appointments.length}</h2>
-          <p className="text-sm text-gray-600">Total appointments scheduled</p>
+          <p className="text-gray-500">Visits</p>
+          <h2 className="text-5xl font-bold">{visits.length}</h2>
+          <p className="text-sm text-gray-600">Total visits scheduled</p>
         </div>
       </div>
 

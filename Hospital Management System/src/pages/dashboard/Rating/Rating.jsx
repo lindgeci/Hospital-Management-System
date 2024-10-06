@@ -6,6 +6,7 @@ import { Button, Box, Dialog, DialogActions, DialogContent, DialogContentText, D
 import Cookies from 'js-cookie';
 import { Add, Delete, Edit } from '@mui/icons-material';
 import { useLocation } from 'react-router-dom';
+import {jwtDecode} from 'jwt-decode';
 function Rating({
     showCreateForm,
     setShowCreateForm,
@@ -18,7 +19,26 @@ function Rating({
     const [employees, setEmployees] = useState([]);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const token = Cookies.get('token');
+    const [userRole, setUserRole] = useState('');
     const location = useLocation();
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+                const decodedToken = jwtDecode(token);
+                const userEmail = decodedToken.email;
+                
+                const userResponse = await axios.get('http://localhost:9004/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+                const currentUser = userResponse.data.find(user => user.email === userEmail);
+                const role = currentUser.role;
+                console.log('User Role:', role); // Debug log to verify the user role
+                setUserRole(role);
+            } catch (err) {
+                console.error('Error fetching user role:', err.response ? err.response.data : err.message);
+            }
+        };
+
+        fetchUserRole();
+    }, [token]);
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -93,6 +113,7 @@ function Rating({
         { field: 'Rating', headerName: 'Rating (1-5)', flex: 1 },
         { field: 'Comments', headerName: 'Comments', flex: 1 },
         { field: 'Date', headerName: 'Date', flex: 1 },
+        ...(userRole == 'admin' ? [
         {
             field: 'update',
             headerName: 'Update',
@@ -121,6 +142,7 @@ function Rating({
                 </Button>
             ),
         }
+    ] : [])
     ];
 
     function formatDate(dateString) {
@@ -157,7 +179,7 @@ function Rating({
                 <Typography variant="h6">
                     Ratings
                 </Typography>
-                {showCreateForm ? null : (
+                {userRole == 'admin' && !showCreateForm && (
                     <Button
                         variant="contained"
                         color="primary"

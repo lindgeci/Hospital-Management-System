@@ -1,7 +1,7 @@
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Modal, Box, TextField, Button, Typography, InputAdornment } from '@mui/material';
+import { Modal, Box, TextField, Button, Typography, FormControl ,FormHelperText , InputLabel , MenuItem ,Select, InputAdornment } from '@mui/material';
 import ErrorModal from '../../../components/ErrorModal';
 import Cookies from 'js-cookie';
 
@@ -112,7 +112,7 @@ function CreateDepartment({ onClose }) {
                 {showErrorModal && <ErrorModal message={alertMessage} onClose={() => setShowErrorModal(false)} />}
                 <Typography variant="h6" component="h1" gutterBottom>Add Department</Typography>
                 
-                <Box mb={2}>
+             
                     <TextField                    
                         fullWidth
                         label="Department Head"
@@ -124,21 +124,27 @@ function CreateDepartment({ onClose }) {
                         onChange={handleChange}
                         helperText="Enter the name of the department head (at least 2 characters)."
                     />
-                </Box>
+
                 
-                <Box mb={2}>
-                    <TextField
-                        fullWidth 
-                        label="Department Name" 
-                        variant="outlined"                          
-                        id='dept_name'
-                        name='Dept_name'
-                        type="text"
-                        value={formData.Dept_name}
-                        onChange={handleChange}
-                        helperText="Enter the department name (at least 2 characters)."
-                    />
-                </Box>
+                
+    <FormControl fullWidth variant="outlined" margin="dense">
+        <InputLabel id="department-select-label">Department</InputLabel>
+        <Select
+            labelId="department-select-label"
+            name="Dept_name"
+            value={formData.Dept_name}
+            onChange={handleChange}
+            label="Department"
+        >
+            <MenuItem value=""><em>Select Department</em></MenuItem>
+            <MenuItem value="Dermatology">Dermatology</MenuItem>
+            <MenuItem value="Neurology">Neurology</MenuItem>
+            <MenuItem value="Pediatrics">Pediatrics</MenuItem>
+        </Select>
+        <FormHelperText>Select the department name.</FormHelperText>
+    </FormControl>
+
+
                 
                 <Box mb={2}>
                     <TextField

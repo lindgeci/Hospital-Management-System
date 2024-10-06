@@ -4,6 +4,109 @@ const UserRole = require('../models/UserRole');
 const Role = require('../models/Role');
 const { Op } = require('sequelize');
 const Patient = require('../models/Patient');
+const Staff = require('../models/Staff'); // Make sure to import the Staff model
+const FindUsersWithoutEmailInPatientOrStaff = async (req, res) => {
+    try {
+        // Fetch all users with their associated roles
+        const users = await User.findAll({
+            include: {
+                model: UserRole,
+                include: {
+                    model: Role,
+                    attributes: ['role_name'], // Fetch the role name
+                },
+            },
+        });
+
+        // Fetch all emails from Patient and Staff models
+        const [patientEmails, staffEmails] = await Promise.all([
+            Patient.findAll({ attributes: ['Email'] }), // 'Email' from Patient model
+            Staff.findAll({ attributes: ['Email'] })    // 'Email' from Staff model
+        ]);
+
+        // Extract emails into arrays
+        const existingPatientEmails = patientEmails.map(patient => patient.Email);
+        const existingStaffEmails = staffEmails.map(staff => staff.Email);
+
+        // Combine the two email arrays and remove duplicates
+        const allExistingEmails = [...new Set([...existingPatientEmails, ...existingStaffEmails])];
+
+        // Filter users whose emails do not exist in the combined email list
+        const filteredUsers = users.filter(user => {
+            // Check if the user has roles and if any of them is admin
+            const isAdmin = user.UserRoles && user.UserRoles.some(userRole => userRole.Role.role_name === 'admin');
+            if (isAdmin) return false; // Skip admin users
+
+            // Check if the user's email is not in the existing email list
+            const emailExists = allExistingEmails.includes(user.Email || user.email);
+
+            // Return true if the email does not exist
+            return !emailExists;
+        });
+
+        // Extract desired properties from filtered users
+        const userData = filteredUsers.map(user => ({
+            id: user.user_id,              // Adjust to match your user model's property names
+            username: user.username,        // Add the desired fields here
+            email: user.Email || user.email  // Include email as well
+            // Add any additional fields as needed
+        }));
+
+        // Send the response with the user data
+        res.json(userData);
+    } catch (error) {
+        console.error('Error fetching users without existing emails in Patient or Staff:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+const FindUsersWithPeriodInEmail = async (req, res) => {
+    try {
+        // Fetch all users with their associated roles
+        const users = await User.findAll({
+            include: {
+                model: UserRole,
+                include: {
+                    model: Role,
+                    attributes: ['role_name'], // Fetch the role name
+                },
+            },
+            attributes: ['user_id', 'username', 'email'], // Fetch user_id, username, and email
+        });
+
+        // Filter users that have the 'patient' role and a period (".") before the "@" in their email
+        const usersWithPeriodBeforeAt = users.filter(user => {
+            const roleNames = user.UserRoles.map(userRole => userRole.Role.role_name);
+            const email = user.email;
+            const atIndex = email.indexOf('@');
+            
+            // Check if the user has the 'patient' role and if the email contains a period before the "@" symbol
+            return roleNames.includes('patient') && atIndex !== -1 && email.lastIndexOf('.', atIndex) !== -1;
+        });
+
+        // Extract desired properties from filtered users
+        const userData = usersWithPeriodBeforeAt.map(user => ({
+            id: user.user_id,              // Adjust to match your user model's property names
+            username: user.username,        // Add the desired fields here
+            email: user.email               // Include email as well
+            // Add any additional fields as needed
+        }));
+
+        // Send response with all patients that have a '.' before the '@'
+        res.json(userData);
+
+    } catch (error) {
+        console.error('Error fetching users with period in email:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+
+
+
+
+
+
 const getPatientByEmail = async (email) => {
     try {
         const patient = await Patient.findOne({
@@ -259,18 +362,33 @@ const UpdateUser = async (req, res) => {
 
 const DeleteUser = async (req, res) => {
     try {
-        const deleted = await User.destroy({
-            where: { user_id: req.params.id },
-        });
-        if (deleted === 0) {
-            res.status(404).json({ error: 'User not found' });
-            return;
+        const userId = req.params.id;
+
+        // Check if the user exists
+        const existingUser = await User.findOne({ where: { user_id: userId } });
+        if (!existingUser) {
+            return res.status(404).json({ error: 'User not found' });
         }
-        res.json({ success: true, message: 'User deleted successfully' });
+
+        const userEmail = existingUser.email; // Get the email of the user to be deleted
+
+        // Delete related staff and patients by the same email
+        await Staff.destroy({ where: { email: userEmail } });
+        await Patient.destroy({ where: { email: userEmail } });
+
+        // Delete the user
+        await User.destroy({ where: { user_id: userId } });
+
+        res.json({ success: true, message: 'User and associated staff/patients deleted successfully' });
     } catch (error) {
         console.error('Error deleting user:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
+};
+
+module.exports = {
+    DeleteUser,
+    // other exports...
 };
 
 module.exports = {
@@ -280,4 +398,6 @@ module.exports = {
     UpdateUser,
     DeleteUser,
     getUsersWithRoles,
+    FindUsersWithoutEmailInPatientOrStaff,
+    FindUsersWithPeriodInEmail
 };
