@@ -1,6 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 const Department = require('./Department'); // Import the Department model
+const User = require('./User');
 
 const Staff = sequelize.define('Staff', {
   Emp_ID: {
@@ -52,6 +53,14 @@ const Staff = sequelize.define('Staff', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'user_id',
+    },
+  },
 }, {
   tableName: 'staff',
   timestamps: false,
@@ -59,5 +68,6 @@ const Staff = sequelize.define('Staff', {
 
 // Define the association between Staff and Department
 Staff.belongsTo(Department, { foreignKey: 'Dept_ID' });
+Staff.belongsTo(User, { foreignKey: 'user_id' });
 
 module.exports = Staff;

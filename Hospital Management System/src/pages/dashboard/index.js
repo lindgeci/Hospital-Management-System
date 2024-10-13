@@ -16,7 +16,7 @@ export * from "@/pages/dashboard/ratings";
 export * from "@/pages/dashboard/doctors";
 export * from "@/pages/dashboard/report";
 export * from "@/pages/dashboard/visit";
-
+export * from "@/pages/dashboard/payroll";
 
 
 

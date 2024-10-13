@@ -1,4 +1,4 @@
-import { Home, Profile, Medicines, Appointments,MedicalHistorys,Bills,Staffs, Patients, Departments, Emergency_Contacts, Insurances, Rooms, Users, Ratings,Doctors, Reports, Visits} from "@/pages/dashboard";
+import { Home, Profile, Medicines, Appointments,MedicalHistorys,Bills,Staffs, Patients, Departments, Emergency_Contacts, Insurances, Rooms, Payrolls, Users, Ratings,Doctors, Reports, Visits} from "@/pages/dashboard";
   import RoleBasedRoute from './ProtectedRoute';
 
 //Nurse
@@ -169,6 +169,19 @@ import { Home, Profile, Medicines, Appointments,MedicalHistorys,Bills,Staffs, Pa
           allowedRoles: ['admin','doctor']
         },
         {
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+</svg>
+
+
+          ),
+          name: "Payrolls",
+          path: "/payroll",
+          element: <Payrolls/>,
+          allowedRoles: ['admin','doctor']
+        },
+        {
           
             icon: (
               <svg data-slot="icon" fill="none" strokeWidth="1.5" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" className="w-6 h-6">
@@ -193,18 +206,18 @@ import { Home, Profile, Medicines, Appointments,MedicalHistorys,Bills,Staffs, Pa
             allowedRoles: ['admin','doctor']
           },
 
-          {
-            icon: (
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-              </svg>
+          // {
+          //   icon: (
+          //     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-6 h-6">
+          //       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+          //     </svg>
   
-            ),
-            name: "appointments",
-            path: "/appointments",
-            element: <Appointments />,
-            allowedRoles: ['admin']
-          },
+          //   ),
+          //   name: "appointments",
+          //   path: "/appointments",
+          //   element: <Appointments />,
+          //   allowedRoles: ['admin']
+          // },
 
 
       // {

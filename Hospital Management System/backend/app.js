@@ -14,7 +14,7 @@ const{refreshAccessToken} = require('./controllers/AuthController');
 const sequelize = require("./config/database");
 const MedicineRoute = require("./routes/MedicineRoutes");
 const Emergency_ContactRoute = require("./routes/Emergency_ContactRoutes");
-const AppointmentRoutes = require('./routes/AppointmentRoutes');
+// const AppointmentRoutes = require('./routes/AppointmentRoutes');
 const PatientRoutes = require('./routes/PatientRoutes');
 const DepartmentRoutes = require('./routes/DepartmentRoutes');
 const InsuranceRoutes = require('./routes/InsuranceRoutes');
@@ -30,7 +30,7 @@ const RegisterRoutes = require('./routes/Register');
 const ReportRoutes = require('./routes/ReportRoutes');
 const BillRoutes = require('./routes/BillRoutes');
 const VisitRoutes = require('./routes/VisitRoutes');
-
+const PayrollRoutes = require('./routes/PayrollRoutes');
 
 
 const app = express();
@@ -54,7 +54,7 @@ const PORT = process.env.PORT || 9004;
 // Define your routes
 app.use("/api",  MedicineRoute);
 app.use("/api", Emergency_ContactRoute);
-app.use("/api", AppointmentRoutes);
+// app.use("/api", AppointmentRoutes);
 app.use("/api",PatientRoutes);
 app.use("/api", DepartmentRoutes);
 app.use("/api", InsuranceRoutes);
@@ -70,6 +70,7 @@ app.use("/api", RegisterRoutes);
 app.use("/api", BillRoutes);
 app.use("/api", ReportRoutes);
 app.use("/api", VisitRoutes);
+app.use("/api", PayrollRoutes);
 
 
 

@@ -127,6 +127,20 @@ const AddPatient = async (req, res) => {
             return res.status(400).json({ error: 'Email, phone number, or personal number already exists.' });
         }
 
+        // Fetch the user by email
+        const user = await User.findOne({
+            where: { email: Email }
+        });
+
+        let userId = null;
+        if (user) {
+            userId = user.user_id; // Get the user_id from the existing user
+        } else {
+            // If the user does not exist, you can choose to handle this case
+            // For example, you can create a new user or return an error
+            return res.status(400).json({ error: 'No user found with the provided email.' });
+        }
+
         // Create new patient
         const newPatient = await Patient.create({
             Personal_Number,
@@ -136,7 +150,8 @@ const AddPatient = async (req, res) => {
             Blood_type,
             Email,
             Gender,
-            Phone
+            Phone,
+            user_id: userId // Associate the patient with the user_id
         });
 
         res.json({ success: true, message: 'Patient added successfully', data: newPatient });
@@ -145,6 +160,7 @@ const AddPatient = async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+
 
 const UpdatePatient = async (req, res) => {
     try {

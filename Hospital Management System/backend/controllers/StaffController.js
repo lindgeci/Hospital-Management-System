@@ -161,6 +161,19 @@ const AddStaff = async (req, res) => {
             return res.status(400).json({ error: 'Staff member with the same Email already exists' });
         }
 
+                // Fetch the user by email
+                const user = await User.findOne({
+                    where: { email: Email }
+                });
+        
+                let userId = null;
+                if (user) {
+                    userId = user.user_id; // Get the user_id from the existing user
+                } else {
+                    // If the user does not exist, you can choose to handle this case
+                    // For example, you can create a new user or return an error
+                    return res.status(400).json({ error: 'No user found with the provided email.' });
+                }
         // Create the staff member in the 'staff' table
         const newStaff = await Staff.create({
             Emp_Fname,
@@ -172,7 +185,8 @@ const AddStaff = async (req, res) => {
             Dept_ID,
             DOB,
             Qualifications,
-            Specialization
+            Specialization,
+            user_id: userId
         });
 
         // Handle Doctor type
